@@ -1,0 +1,14 @@
+.env
+.env.*
+!.env.example
+node_modules/
+dist/
+.angular/
+coverage/
+*.log
+*.test
+apps/api/bin/
+apps/web/.angular/
+apps/web/dist/
+.playwright/
+artifacts/

@@ -1,0 +1,46 @@
+name: walactv-next
+
+# Dokploy starts with this file as its single Compose entry point. The service
+# definitions stay in compose.yml; only production network/image names differ.
+services:
+  migrate:
+    extends:
+      file: compose.yml
+      service: migrate
+    image: walactv-next-api:local
+    networks:
+      - default
+      - dokploy
+
+  bootstrap-admin:
+    extends:
+      file: compose.yml
+      service: bootstrap-admin
+    image: walactv-next-api:local
+    networks:
+      - default
+      - dokploy
+
+  api:
+    extends:
+      file: compose.yml
+      service: api
+    image: walactv-next-api:local
+    networks:
+      - default
+      - dokploy
+
+  web:
+    extends:
+      file: compose.yml
+      service: web
+    image: walactv-next-web:local
+    networks:
+      - default
+      - dokploy
+
+networks:
+  default: {}
+  dokploy:
+    name: ${DOKPLOY_NETWORK_NAME:-dokploy-network}
+    external: true

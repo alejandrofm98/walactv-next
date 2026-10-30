@@ -1,0 +1,77 @@
+name: walactv
+
+services:
+  migrate:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    image: walactv-api:local
+    command: ["migrate"]
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?Configura DATABASE_URL en .env}
+    restart: "no"
+
+  bootstrap-admin:
+    image: walactv-api:local
+    command: ["bootstrap-admin"]
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?Configura DATABASE_URL en .env}
+      BOOTSTRAP_ADMIN_USERNAME: ${BOOTSTRAP_ADMIN_USERNAME:?Configura BOOTSTRAP_ADMIN_USERNAME en .env}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:?Configura BOOTSTRAP_ADMIN_PASSWORD en .env}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: "no"
+
+  api:
+    image: walactv-api:local
+    command: ["serve"]
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?Configura DATABASE_URL en .env}
+      APP_ORIGIN: ${APP_ORIGIN:?Configura APP_ORIGIN en .env}
+      SESSION_SECRET: ${SESSION_SECRET:?Configura SESSION_SECRET en .env}
+      PROVIDER_IDENTITY_KEY: ${PROVIDER_IDENTITY_KEY:?Configura PROVIDER_IDENTITY_KEY en .env}
+      IPTV_ENCRYPTION_KEY: ${IPTV_ENCRYPTION_KEY:?Genera y conserva IPTV_ENCRYPTION_KEY con scripts/setup-local.sh}
+      IPTV_ALLOWED_HOSTS: ${IPTV_ALLOWED_HOSTS-}
+      TMDB_API_TOKEN: ${TMDB_API_TOKEN-}
+      VOD_TRANSCODING_ENABLED: ${VOD_TRANSCODING_ENABLED:-false}
+      PRIVATE_STATE_STORE: memory
+      API_REPLICAS: ${API_REPLICAS:-1}
+      API_ADDR: ":8080"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      bootstrap-admin:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    cpus: 2.0
+    mem_limit: 1536m
+    pids_limit: 128
+    tmpfs:
+      - /var/lib/walactv-vod:rw,noexec,nosuid,size=256m,uid=10001,gid=10001,mode=0700
+    deploy:
+      replicas: ${API_REPLICAS:-1}
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+    image: walactv-web:local
+    expose:
+      - "80"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
