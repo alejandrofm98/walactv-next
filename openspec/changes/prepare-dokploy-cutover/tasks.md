@@ -4,7 +4,7 @@ Cada tarea se limita a una sesión acotada y registra su evidencia en `docs/depl
 
 ## 1. Preparación local
 
-- [x] 1.1 Actualizar `docs/deployment.md` con repo público/origin, estado sin commit/push, la revalidación autenticada del 2026-10-30 y los destinos/recursos nuevos que siguen pendientes; mantener los detalles privados en el inventario local.
+- [x] 1.1 Actualizar `docs/deployment.md` con el commit público inicial, el proyecto/servicio Dokploy creado, el dominio final elegido y los recursos/secrets/despliegue que siguen pendientes; mantener los detalles privados en el inventario local.
 - [x] 1.2 Preparar `compose.dokploy.yml` y mapa de variables por nombre/referencia privada: conectar migrate/bootstrap-admin/api a la red compartida seleccionada, conservar web→api y proxy→web, solo web pública, una réplica y conversión desactivada inicialmente; validar la combinación productiva y la local con `config --quiet` y redes por servicio, usando configuración de ejemplo sin conectar a base real.
 - [x] 1.3 Revisar los 120 archivos no ignorados: el escaneo saneado no encontró claves, credenciales embebidas, rutas personales, hostname de producción ni URL IPTV real. Confirmar que `.env` y `artifacts/` están ignorados. Antes del primer push, `origin` era el repositorio público nuevo sin referencias ni refspec, y no existía un servicio Dokploy de Next asociado; `main` se seleccionó para inicializar GitHub, no por inferencia del destino Dokploy.
 - [x] 1.4 Redactar `docs/dokploy-release.md` para instalación, migración/bootstrap, dominio final, recuperación y continuidad de usuarios; verificar que comandos/rutas existen y que el runbook no promete migración legacy ni rollback automático de esquema.
@@ -14,7 +14,7 @@ Cada tarea se limita a una sesión acotada y registra su evidencia en `docs/depl
 ## 2. Revalidación del panel después del login
 
 - [x] 2.1 Leer la configuración actual de WEB y recursos asociados; registrar dominio/puerto, repositorio/rama/Compose, Auto Deploy, commit/imagen recuperables y fuente/fecha en el inventario privado, con resumen público saneado.
-- [ ] 2.2 Crear el proyecto separado propuesto WALACTV NEXT y confirmar servicio, repositorio/rama, Auto Deploy y recursos; usar como dominio final el hostname actual de WEB y verificar todos los destinos de la rama antes del push.
+- [ ] 2.2 Completar el proyecto/servicio ya creado `WALACTV NEXT` / `WEB NEXT`: repositorio `walactv-next`, rama `main`, Compose `compose.dokploy.yml`, Auto Deploy apagado; crear DB, configurar red/secrets y luego decidir Auto Deploy. El dominio final elegido es el hostname actual de WEB; verificar destinos antes de nuevos pushes.
 - [ ] 2.3 Confirmar PostgreSQL nueva, redes reales/proxy, SSL, referencias de secretos, backup/restore y capacidad del servidor; verificar aislamiento frente a bases legacy, el acceso de los tres servicios de base y conservar `API_REPLICAS=1` antes de configurar recursos.
 - [x] 2.4 Revalidar actividad actual de IPTV/SCRAPPER/dev y contrastar consumidores documentados, Compose, datos y recursos; completar la matriz sin inferir tráfico o responsables no observados. Todos siguen activos y no hay candidato de retirada demostrado.
 

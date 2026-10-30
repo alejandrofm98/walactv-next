@@ -6,15 +6,15 @@ Leer `AGENTS.md` y `docs/deployment.md`; este último será la fuente del mapa d
 
 Hechos comprobados localmente y en Dokploy al 2026-10-30:
 
-- Antes de la primera publicación, el checkout estaba en `main` sin commits y `origin` apuntaba al repositorio público nuevo `alejandrofm98/walactv-next`, sin referencias. `main` se seleccionó como primera rama pública; la rama Dokploy se configurará explícitamente y no se inferirá de la rama local.
+- El repositorio público `alejandrofm98/walactv-next` se inicializó en `main`, commit `27cd12f5dc73759070cc710e77c360488bd713e8`. Ese push ocurrió antes de enlazar Dokploy; el destino inicial de la rama y el remoto se verificaron vacíos.
 - El panel Dokploy v0.29.5 se abrió autenticado y se revisó en solo lectura. La web antigua sigue activa en producción, con HTTPS, Auto Deploy `On Push` y una última revisión exitosa recuperable. Las API IPTV y los scraper de producción y desarrollo también tienen contenedores activos.
 - El usuario eligió como dominio final el hostname que ya sirve la web antigua. La ruta se conservará durante el despliegue inicial de Next y se reasignará al servicio `web` solo después de validar la salud interna; la web anterior permanecerá recuperable para volver a asignarle la ruta.
 - Los recursos PostgreSQL legacy de producción y desarrollo existen; el panel no muestra un proveedor de copias de seguridad configurado. No se han leído secretos ni valores de conexión. Ramas, IDs, hostnames y referencias exactas de recuperación se mantienen en el inventario privado local.
-- No existe todavía proyecto/servicio Dokploy de WalacTV Next, ni se han seleccionado rama, Auto Deploy o PostgreSQL propia. El repositorio público sigue sin commit/push.
+- Ya existe el proyecto `WALACTV NEXT` y el servicio Compose `WEB NEXT`, enlazado a `main` y `compose.dokploy.yml`. Auto Deploy está apagado; no hay despliegue, PostgreSQL propia o secretos configurados todavía.
 - El contexto local de Android declara que consume la API IPTV anterior; esa API consume datos producidos por un scraper. La aplicación nueva no usa estos servicios, pero esto no convierte sus consumidores anteriores en prescindibles.
 - `compose.yml` contiene trabajos `migrate` y `bootstrap-admin`, API y web. `compose.local.yml` añade exclusivamente la PostgreSQL local. La nueva API conserva leases, importaciones y streams en memoria y exige una réplica.
 
-La solicitud actual prepara el corte y evalúa retiradas. La creación de recursos, publicación y cambio de ruta siguen pendientes de destinos confirmados y autorización aplicable. La revalidación del panel por sí sola no autoriza a alterar la instalación existente.
+La solicitud actual prepara el corte y evalúa retiradas. El usuario autorizó el proyecto separado y eligió el dominio final; el servicio queda aislado y sin Auto Deploy hasta completar secrets/base. No se corta la ruta ni se modifica un servicio legacy durante la instalación inicial.
 
 ## Goals / Non-Goals
 
@@ -86,7 +86,7 @@ La presencia de contenedores activos y las copias locales no prueban tráfico ni
 
 ## Open Questions
 
-Pendientes operativos que bloquean las fases productivas, pero no cambian la preparación local: proyecto/servicio y rama nueva; Auto Deploy nuevo; PostgreSQL propia/red/SSL/backups; certificado/ruta del dominio final; capacidad del servidor; cuenta de aceptación disponible; responsable/ventana de recuperación y consumidores/responsables reales de servicios dev. Se completan con evidencia en `docs/deployment.md` antes de la tarea dependiente.
+Pendientes operativos que bloquean las fases productivas: PostgreSQL propia/red/SSL, credenciales y claves privadas, destino de backups, activar Auto Deploy cuando sea seguro, verificar certificado/ruta del dominio final, capacidad del servidor, cuenta de aceptación, ventana de recuperación y consumidores/responsables reales de servicios dev. Registrar la evidencia en `docs/deployment.md` antes de la tarea dependiente.
 
 ## Verification
 

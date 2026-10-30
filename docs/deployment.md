@@ -2,22 +2,24 @@
 
 ## Estado comprobado · 2026-10-30
 
-- El repositorio público [walactv-next](https://github.com/alejandrofm98/walactv-next) existe y `origin` apunta a él. Antes de la primera publicación se comprobó que no tenía referencias remotas ni refspec de push, y ningún servicio Dokploy de Next estaba asociado. `main` se usa para inicializar el repositorio público; la rama del servicio Dokploy se seleccionará explícitamente después.
+- El repositorio público [walactv-next](https://github.com/alejandrofm98/walactv-next) se inicializó en `main` con el commit `27cd12f5dc73759070cc710e77c360488bd713e8`. Antes del push se comprobó que el remoto estaba vacío, no había refspec de push y ningún servicio Dokploy de Next estaba asociado.
+- Se creó el proyecto Dokploy `WALACTV NEXT`, entorno `production`, y el servicio Compose `WEB NEXT`. Está vinculado al repositorio público, rama `main` y `compose.dokploy.yml`; Auto Deploy está apagado mientras se completa la configuración. Todavía no se ha ejecutado ningún despliegue de Next.
 - Dokploy v0.29.5 se revisó con sesión autenticada el 2026-10-30, en modo de solo lectura. El proyecto WALACTV contiene un entorno de producción y uno de desarrollo, con siete recursos en total. La configuración privada por servicio, IDs, hostnames y revisiones recuperables se conserva en el inventario privado local de Dokploy; este documento público no replica esos detalles.
 - La web anterior está en producción, tiene HTTPS y sigue ejecutándose. Su Auto Deploy está habilitado con activador `On Push`; la revisión de despliegues muestra una última versión exitosa recuperable. No se cambió su configuración ni su dominio.
 - El usuario eligió como dominio final el mismo hostname que ahora sirve la web anterior. La referencia exacta permanece en el inventario privado. Se transferirá desde la web antigua a Next solo cuando el nuevo servicio esté desplegado y sus comprobaciones internas hayan pasado.
 - Las API IPTV y los servicios scraper de producción y desarrollo siguen activos. Los recursos PostgreSQL antiguos también existen; Dokploy no muestra proveedor de copias de seguridad configurado para las bases observadas.
-- No se creó un proyecto/servicio Dokploy para WalacTV Next ni se eligieron su rama de despliegue, base propia, red o secretos. La publicación de código no despliega nada mientras no exista ese servicio. No se ha desplegado Next ni transferido ningún dominio. Ningún recurso antiguo se modificó o eliminó.
+- No se creó todavía la PostgreSQL propia ni se configuraron secretos/red de Next. El dominio sigue en la web anterior; no se ha transferido ni se ha desplegado Next. Ningún servicio o dato legacy se modificó o eliminó.
 
 ## Destinos pendientes
 
 | Elemento | Estado | Evidencia necesaria |
 |---|---|---|
-| Repositorio | Público, `origin` configurado y remoto vacío en la última consulta | Verificar remoto/refspec y destinos automáticos de la rama justo antes de publicar |
-| Rama de Dokploy, proyecto y servicio nuevos | Pendientes | Elegir el destino en el panel y no inferirlo de la rama local `main` |
-| Auto Deploy nuevo | Pendiente | Confirmar el disparador y todos los entornos que recibirían la rama elegida |
+| Repositorio | Público, `main` publicado en el commit documentado | Antes de nuevos pushes, comprobar refspec y todos los destinos enlazados |
+| Proyecto/servicio nuevos | `WALACTV NEXT` / `WEB NEXT`, entorno `production`, configurados en Dokploy | Completar PostgreSQL y secretos; no se ha ejecutado despliegue |
+| Rama y Compose nuevos | `main`, `./compose.dokploy.yml` | Verificar que el checkout del servidor use este entrypoint al desplegar |
+| Auto Deploy nuevo | Apagado; trigger `On Push` guardado | Habilitar después de confirmar env vars, base y comportamiento del primer despliegue |
 | Web anterior | Revalidada en el panel el 2026-10-30 | Consultar el inventario privado para su dominio, ruta, repositorio, rama y última revisión exitosa antes del corte |
-| PostgreSQL nueva | No creada ni elegida; las bases antiguas siguen presentes y no tienen proveedor de copias configurado | Elegir recurso separado, comprobar red interna, SSL, capacidad y procedimiento de backup/restauración |
+| PostgreSQL nueva | Pendiente de crear; Dokploy no tiene destino S3/R2 configurado | Crear recurso separado; confirmar red interna y restauración antes de cargar datos IPTV |
 | Dominio final | Elegido por el usuario: hostname actual de la web anterior | Verificar hostname/certificado en Dokploy al configurar Next; reasignarlo solo en el corte y mantener la web anterior disponible para recuperación |
 
 El Compose productivo es `compose.dokploy.yml`, que extiende las definiciones de `compose.yml`. Usa la red `dokploy-network` (o el nombre confirmado mediante `DOKPLOY_NETWORK_NAME`) para permitir acceso interno a PostgreSQL y al proxy. `compose.local.yml` es solo para desarrollo y nunca se combina en Dokploy. Consulta el [runbook de publicación y recuperación](dokploy-release.md).
@@ -79,7 +81,7 @@ Tras implementar se verificarán los comandos Go, web, validación Compose sin s
 
 `docker compose -f compose.yml -f compose.local.yml up --build -d` crea el PostgreSQL independiente, ejecuta `walactv migrate`, `walactv bootstrap-admin` y después `walactv serve`. Los jobs terminaron con código 0; PostgreSQL/API/web saludables. Migradores concurrentes y bootstrap repetido comprobados. `nginx -t`, Compose `config --quiet` y `/api/v1/health` correctos. Ver `docs/local-verification.md` para evidencia y límites.
 
-El repositorio público existe pero sigue sin commit ni push. No hay servicio Dokploy de Next ni despliegue productivo que verificar. Las ramas/Auto Deploy nuevos siguen pendientes de configurar. El dominio de la fuente IPTV se configura explícitamente en `IPTV_ALLOWED_HOSTS` del entorno privado; no publicar la configuración local.
+El repositorio público y el servicio Dokploy `WEB NEXT` existen; el primer commit se publicó en `main` y la conexión Compose quedó guardada con Auto Deploy apagado. Aún no se ha ejecutado despliegue ni se han creado PostgreSQL/secrets para Next. El dominio de la fuente IPTV se configura explícitamente en `IPTV_ALLOWED_HOSTS` del entorno privado; no publicar la configuración local.
 
 ## Actualización de persistencia privada · 2026-10-28
 

@@ -1,12 +1,12 @@
 # Publicación y sustitución en Dokploy
 
-Este runbook prepara una publicación nueva y aislada de WalacTV Next. No migra datos ni cuentas de la web anterior. Dokploy se revalidó en sesión autenticada el 2026-10-30; la creación del nuevo destino y los cambios de configuración siguen pendientes.
+Este runbook prepara una publicación nueva y aislada de WalacTV Next. No migra datos ni cuentas de la web anterior. Dokploy se revalidó el 2026-10-30; el proyecto y servicio se crearon y quedaron vinculados al repositorio y Compose. La PostgreSQL, secretos, red y primer despliegue siguen pendientes.
 
 ## 1. Confirmar el destino
 
-Usar el inventario privado local, revalidado en Dokploy el 2026-10-30, como referencia de la web antigua y de las ramas con Auto Deploy. Confirmar de nuevo su estado recuperable y todos los destinos que recibirían el push elegido justo antes del corte/publicación. No usar la rama local `main` como prueba del destino.
+Usar el inventario privado local, revalidado en Dokploy el 2026-10-30, como referencia de la web antigua y de las ramas con Auto Deploy. El servicio nuevo ya está configurado explícitamente con `main`; antes de futuros pushes, comprobar refspec y todos los destinos que recibirían esa rama. Confirmar el estado recuperable de la web anterior justo antes del corte.
 
-La primera publicación debe crear un proyecto Dokploy separado, propuesto como `WALACTV NEXT`, con un servicio Compose `WEB NEXT`. Aún no se ha creado el proyecto/servicio ni se han seleccionado entorno, rama o Auto Deploy. El dominio final será el hostname que ahora usa `WEB`; su referencia exacta está en el inventario privado. No cambiar la ruta del dominio actual durante el build y despliegue inicial.
+El proyecto separado `WALACTV NEXT` y el servicio Compose `WEB NEXT` ya existen. El servicio está configurado con el repositorio público, la rama `main` y `compose.dokploy.yml`; Auto Deploy permanece apagado. El dominio final será el hostname que ahora usa `WEB`; su referencia exacta está en el inventario privado. No cambiar su ruta durante el build y despliegue inicial.
 
 ## 2. Preparar PostgreSQL y redes
 
@@ -27,7 +27,7 @@ El archivo `.env.example` solo sirve para validar el formato; no copiar sus valo
 
 ## 3. Configurar el servicio nuevo
 
-En Dokploy, elegir el repositorio público `alejandrofm98/walactv-next`, la rama que se confirme como destino, tipo Docker Compose y archivo `compose.dokploy.yml`. Confirmar que el servicio tiene proyecto Compose e imágenes separados de cualquier instancia anterior.
+En Dokploy, el servicio ya está vinculado al repositorio público `alejandrofm98/walactv-next`, rama `main`, tipo Docker Compose y archivo `compose.dokploy.yml`. Mantener Auto Deploy apagado hasta completar la configuración privada y tener lista la primera instalación.
 
 Crear secretos nuevos para este servicio y cargarlos solo en la configuración privada de Dokploy. Registrar los nombres, no los valores:
 
