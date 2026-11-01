@@ -1,7 +1,7 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { AceChannel, CatalogKind, CatalogLanguage, CatalogPage, CatalogStatus, Category, Episode, Favorite, MetadataResponse, Playback, PlaybackDiagnostic, PlaybackKind, Progress, Session, Source, TranscodePlayback } from '../models';
+import { AceChannel, CatalogKind, CatalogLanguage, CatalogPage, CatalogStatus, Category, Episode, Favorite, MetadataResponse, Playback, PlaybackDiagnostic, PlaybackKind, Progress, Session, Source, TranscodePlayback, VodTracks } from '../models';
 
 const BASE = '/api/v1';
 
@@ -27,8 +27,10 @@ export class ApiService {
   removeSource(id: string): Observable<void> {
     return this.http.delete<void>(`${BASE}/sources/${encodeURIComponent(id)}`, { headers: this.writeHeaders });
   }
-  categories(sourceId: string, type: CatalogKind): Observable<{ categories: Category[] }> {
-    return this.http.get<{ categories: Category[] }>(`${BASE}/sources/${encodeURIComponent(sourceId)}/categories`, { params: { type } });
+  categories(sourceId: string, type: CatalogKind, language = ''): Observable<{ categories: Category[] }> {
+    let params = new HttpParams().set('type', type);
+    if (language) params = params.set('language', language);
+    return this.http.get<{ categories: Category[] }>(`${BASE}/sources/${encodeURIComponent(sourceId)}/categories`, { params });
   }
   catalogStatus(sourceId: string): Observable<CatalogStatus> {
     return this.http.get<CatalogStatus>(`${BASE}/sources/${encodeURIComponent(sourceId)}/catalog`);
@@ -45,6 +47,9 @@ export class ApiService {
     if (language) params = params.set('language', language);
     if (search.trim()) params = params.set('search', search.trim());
     return this.http.get<CatalogPage>(`${BASE}/sources/${encodeURIComponent(sourceId)}/items`, { params });
+  }
+  item(sourceId: string, kind: CatalogKind, itemId: string): Observable<import('../models').CatalogItem> {
+    return this.http.get<import('../models').CatalogItem>(`${BASE}/sources/${encodeURIComponent(sourceId)}/items/${kind}/${encodeURIComponent(itemId)}`);
   }
   episodes(sourceId: string, seriesId: string): Observable<{ episodes: Episode[] }> {
     return this.http.get<{ episodes: Episode[] }>(`${BASE}/sources/${encodeURIComponent(sourceId)}/series/${encodeURIComponent(seriesId)}/episodes`);
@@ -64,8 +69,11 @@ export class ApiService {
   playbackDiagnostic(id: string): Observable<PlaybackDiagnostic> {
     return this.http.get<PlaybackDiagnostic>(`${BASE}/playbacks/${encodeURIComponent(id)}/diagnostic`);
   }
-  transcodePlayback(id: string, offsetSeconds: number): Observable<TranscodePlayback> {
-    return this.http.post<TranscodePlayback>(`${BASE}/playbacks/${encodeURIComponent(id)}/transcode`, { offsetSeconds }, { headers: this.writeHeaders });
+  playbackTracks(id: string): Observable<VodTracks> {
+    return this.http.post<VodTracks>(`${BASE}/playbacks/${encodeURIComponent(id)}/tracks`, {}, { headers: this.writeHeaders });
+  }
+  transcodePlayback(id: string, offsetSeconds: number, selection?: { trackRevision?: string; audioTrackId?: string; subtitleTrackId?: string }): Observable<TranscodePlayback> {
+    return this.http.post<TranscodePlayback>(`${BASE}/playbacks/${encodeURIComponent(id)}/transcode`, { offsetSeconds, ...selection }, { headers: this.writeHeaders });
   }
   cancelTranscode(id: string): Observable<void> {
     return this.http.delete<void>(`${BASE}/playbacks/${encodeURIComponent(id)}/transcode`, { headers: this.writeHeaders });

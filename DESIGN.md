@@ -8,7 +8,7 @@ Color strategy: restrained. Warm ink surfaces carry the page; a muted brass acce
 
 ## Brand distinction
 
-WalacTV keeps its own brand, navigation and catalog; do not borrow Nuvio or Stremio assets, motifs, naming or branded UI. The VOD player may use their general affordances as inspiration: let the video dominate, keep playback controls discreet and keep progress understandable. Live playback uses a separate TV/IPTV composition with the channel title, an explicit on-air badge and one clear return action. Keep WalacTV's warm brass palette and restrained editorial tone. The catalog uses a compact typographic heading and direct search/filter controls. The poster grid remains a practical way to browse the user's IPTV catalog.
+WalacTV keeps its own brand, navigation and catalog; do not borrow Nuvio or Stremio assets, motifs, naming or branded UI. Use the existing WalacTV app mark (`apps/web/public/logo.png`) and app icon (`apps/web/public/favicon.png`) as the canonical logo assets. The VOD player may use Nuvio's general affordances as inspiration: let the video dominate, keep playback controls discreet and keep progress understandable. Live playback uses a separate TV/IPTV composition with the channel title, an explicit on-air badge and one clear return action. Keep WalacTV's warm brass palette and restrained editorial tone. The catalog uses a compact typographic heading and direct search/filter controls. The poster grid remains a practical way to browse the user's IPTV catalog.
 
 ## Color roles
 

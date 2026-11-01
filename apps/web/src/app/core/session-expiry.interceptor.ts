@@ -13,7 +13,7 @@ export const sessionExpiryInterceptor: HttpInterceptorFn = (request, next) => {
     const publicAuthRequest = pathname.endsWith('/auth/login') || pathname.endsWith('/auth/me');
     if (error instanceof HttpErrorResponse && error.status === 401 && pathname.startsWith('/api/v1/') && !publicAuthRequest && auth.user()) {
       auth.expire();
-      if (router.url !== '/login') void router.navigateByUrl('/login');
+      if (router.url !== '/login') void router.navigateByUrl(router.createUrlTree(['/login'], { queryParams: { returnUrl: router.url } }));
     }
     return throwError(() => error);
   }));

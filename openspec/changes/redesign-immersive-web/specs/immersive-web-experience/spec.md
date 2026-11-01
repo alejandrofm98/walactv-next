@@ -5,9 +5,15 @@
 ### Requirement: Identidad visual propia
 La web SHALL conservar identidad propia en marca, navegación y catálogo, sin reutilizar marcas, recursos gráficos, iconografía distintiva ni textos de Nuvio/Stremio. El reproductor VOD SHALL poder inspirarse en sus affordances y composición inmersiva. El catálogo SHALL priorizar un encabezado compacto y controles directos de la biblioteca IPTV personal.
 
+La marca de acceso, navegación y reproductor, junto con el favicon, SHALL reutilizar los assets oficiales de la aplicación WalacTV existente.
+
 #### Scenario: Diferenciar la biblioteca
 - **WHEN** se abre Directo, Películas o Series
 - **THEN** se ve el nombre claro de la sección, los controles de catálogo sin un banner promocional genérico ni elementos que imiten otra plataforma
+
+#### Scenario: Reutilizar la marca WalacTV
+- **WHEN** se muestra la marca de la aplicación o el icono de la pestaña
+- **THEN** se usa el logo y favicon oficiales de WalacTV, conservando el nombre accesible de la marca
 
 ### Requirement: Lenguaje visual inmersivo coherente
 La web SHALL usar el mismo sistema documentado de tokens OKLCH, tipografía legible, espaciado, controles y estados en acceso, shell, conexión de fuente, directo, películas, series, favoritos, Ace Stream, diálogos y reproductor. SHALL mantener tema oscuro, idioma español y registro de producto centrado en descubrir y reproducir contenido.

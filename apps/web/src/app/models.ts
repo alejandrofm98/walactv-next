@@ -13,7 +13,9 @@ export interface CatalogLanguage { id: string; name: string; }
 export interface CatalogStatus { status: 'empty' | 'syncing' | 'ready' | 'error'; updatedAt?: string; errorCode?: string; counts: Record<CatalogKind, number>; }
 export interface Episode { id: string; title: string; season: number; episode: number; containerExtension: string; contentKey?: string; }
 export interface Playback { id: string; url: string; format: 'hls' | 'file'; title: string; contentKey: string; expiresAt: string; }
-export interface TranscodePlayback { playbackId: string; generation: string; manifestUrl: string; offsetSeconds: number; durationSeconds: number; }
+export interface VodTrack { id: string; type: 'audio' | 'subtitle'; language?: string; label: string; codec?: string; selectable: boolean; unavailable?: string; }
+export interface VodTracks { status: 'complete' | 'partial' | 'unavailable'; revision?: string; tracks: VodTrack[]; reason?: string; }
+export interface TranscodePlayback { playbackId: string; generation: string; manifestUrl: string; offsetSeconds: number; durationSeconds: number; audioTrackId?: string; subtitleTrackId?: string; }
 export interface PlaybackDiagnostic { cause: string; upstreamStatus?: number; }
 export interface Favorite { id: string; contentKey: string; title: string; kind: LibraryKind; }
 export interface Progress { contentKey: string; title: string; kind: LibraryKind; positionSeconds: number; durationSeconds: number; updatedAt: string; }

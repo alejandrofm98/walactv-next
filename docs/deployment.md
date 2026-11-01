@@ -1,5 +1,25 @@
 # Contexto de despliegue
 
+## Revalidación actual de Dokploy · 2026-11-01
+
+Lectura del panel Dokploy v0.30.10, solo lectura: `WALACTV NEXT` mantiene el entorno `production` con `DB NEXT` y `WEB NEXT`. `WEB NEXT` apunta al repositorio `alejandrofm98/walactv-next`, rama `main`, Compose `./compose.dokploy.yml`; Auto Deploy está activado con trigger `On Push`. El historial del panel muestra como último despliegue correcto el commit `a83c78d` y el anterior `c243fc50`. Por tanto, el push autorizado a `origin/main` actualizará el entorno de producción. No se modificó la configuración de Dokploy ni se consultaron valores de secretos.
+
+## DB NEXT · 2026-11-01
+
+Decisión posterior del usuario: no desea configurar copias de seguridad para esta instalación. Las indicaciones históricas de aplazar la importación hasta configurar backups ya no reflejan su decisión; no hay backup/restauración comprobados.
+
+Actualización posterior: `WEB NEXT` desplegó correctamente el commit `c243fc50f61c090dca225398b8be2e44e675753e`. Dokploy mostró web y API saludables, y los trabajos de migración y bootstrap con código 0; el dominio HTTPS respondió HTTP 200. No se verificó el inicio de sesión ni se importó una fuente IPTV. Este resultado sustituye al estado de fallo del primer intento descrito abajo.
+
+El usuario creó `DB NEXT` en Dokploy y se inició PostgreSQL independiente para producción. Se observó el contenedor en ejecución con `postgres:18`. Por solicitud y confirmación del usuario, se guardó el puerto externo TCP `5439` en el recurso; las seis bases anteriores tenían configurados los puertos 5433–5438. El usuario configurará el firewall del VPS. Queda pendiente comprobar la publicación efectiva del puerto y la conectividad externa y de la aplicación; el valor guardado no demuestra que sea accesible. No se han configurado ni probado copias de seguridad para Next.
+
+El primer despliegue manual de `WEB NEXT` usó el commit `315fc5d0551b59ebae09c16c889f4c48a7d7cfca` y terminó en error. El trabajo `migrate` terminó con código 0 y `bootstrap-admin` con código 1: el log indicó que las credenciales iniciales no cumplían las longitudes requeridas. API y web quedaron creadas sin iniciar. El dominio elegido quedó configurado el 2026-11-01 en Dokploy para `web:80`, ruta `/` y HTTPS con Let's Encrypt; el panel indica que hace falta redesplegar para aplicarlo. Falta corregir privadamente la contraseña bootstrap (12–72 bytes), desplegar de nuevo y comprobar salud, certificado y ruta. No se importó la fuente IPTV real.
+
+## Actualización de retirada · 2026-11-01
+
+Por decisión expresa del usuario se eliminaron en Dokploy los servicios Compose `WEB` e `IPTV` de producción e `IPTV DEV`, marcando en los tres la opción de eliminar los volúmenes asociados. Dokploy confirmó la eliminación de cada servicio. Los volúmenes externos `iptv-data` y `walactv-dev-iptv-data` siguen presentes: Docker rechazó su eliminación porque hay contenedores que los usan. Los listados del panel conservan `SCRAPPER` y `db` en producción, y `SCRAPPER DEV` y `DB DEV` en desarrollo. No se eliminaron las bases de datos ni los scrapers.
+
+La web anterior ya no está disponible como servicio de Dokploy. La comprobación previa a publicar Next observó que aún no había despliegues; esa instantánea quedó supersedida por la revalidación actual de arriba, que confirma despliegues correctos de `WEB NEXT`. La API antigua ya no está disponible para Android. Las observaciones siguientes del 30 de octubre son históricas y no describen el estado actual de esos tres servicios.
+
 ## Estado comprobado · 2026-10-30
 
 - El repositorio público [walactv-next](https://github.com/alejandrofm98/walactv-next) se inicializó en `main` con el commit `27cd12f5dc73759070cc710e77c360488bd713e8`. Antes del push se comprobó que el remoto estaba vacío, no había refspec de push y ningún servicio Dokploy de Next estaba asociado.
@@ -8,7 +28,8 @@
 - La web anterior está en producción, tiene HTTPS y sigue ejecutándose. Su Auto Deploy está habilitado con activador `On Push`; la revisión de despliegues muestra una última versión exitosa recuperable. No se cambió su configuración ni su dominio.
 - El usuario eligió como dominio final el mismo hostname que ahora sirve la web anterior. La referencia exacta permanece en el inventario privado. Se transferirá desde la web antigua a Next solo cuando el nuevo servicio esté desplegado y sus comprobaciones internas hayan pasado.
 - Las API IPTV y los servicios scraper de producción y desarrollo siguen activos. Los recursos PostgreSQL antiguos también existen; Dokploy no muestra proveedor de copias de seguridad configurado para las bases observadas.
-- No se creó todavía la PostgreSQL propia ni se configuraron secretos/red de Next. El dominio sigue en la web anterior; no se ha transferido ni se ha desplegado Next. Ningún servicio o dato legacy se modificó o eliminó.
+- El usuario decidió crear la PostgreSQL propia con el recurso Database → PostgreSQL de Dokploy, separado de Compose. Todavía no se ha creado: el usuario introducirá la contraseña y los valores de secretos en el panel; este agente no los generará ni cargará. No hay destino S3/R2 configurado; por decisión del usuario, la preparación de backups queda pendiente hasta inmediatamente antes de importar la lista IPTV real. No se importará esa lista antes de configurar y comprobar el backup.
+- El dominio sigue en la web anterior; no se ha transferido ni se ha desplegado Next. Ningún servicio o dato legacy se modificó o eliminó.
 
 ## Destinos pendientes
 
@@ -19,7 +40,7 @@
 | Rama y Compose nuevos | `main`, `./compose.dokploy.yml` | Verificar que el checkout del servidor use este entrypoint al desplegar |
 | Auto Deploy nuevo | Apagado; trigger `On Push` guardado | Habilitar después de confirmar env vars, base y comportamiento del primer despliegue |
 | Web anterior | Revalidada en el panel el 2026-10-30 | Consultar el inventario privado para su dominio, ruta, repositorio, rama y última revisión exitosa antes del corte |
-| PostgreSQL nueva | Pendiente de crear; Dokploy no tiene destino S3/R2 configurado | Crear recurso separado; confirmar red interna y restauración antes de cargar datos IPTV |
+| PostgreSQL nueva | El usuario eligió Database → PostgreSQL de Dokploy; aún no se ha creado. El usuario introducirá la contraseña | Crear recurso independiente de Compose; completar red y secretos. Configurar y comprobar backups justo antes de importar la lista IPTV real |
 | Dominio final | Elegido por el usuario: hostname actual de la web anterior | Verificar hostname/certificado en Dokploy al configurar Next; reasignarlo solo en el corte y mantener la web anterior disponible para recuperación |
 
 El Compose productivo es `compose.dokploy.yml`, que extiende las definiciones de `compose.yml`. Usa la red `dokploy-network` (o el nombre confirmado mediante `DOKPLOY_NETWORK_NAME`) para permitir acceso interno a PostgreSQL y al proxy. `compose.local.yml` es solo para desarrollo y nunca se combina en Dokploy. Consulta el [runbook de publicación y recuperación](dokploy-release.md).
@@ -46,7 +67,7 @@ El despliegue mantiene `API_REPLICAS=1`; `VOD_TRANSCODING_ENABLED` queda en `fal
 ## PostgreSQL y migraciones
 
 - Desarrollo usa una base nueva exclusivamente local. No se importa ni modifica información de aplicaciones anteriores.
-- Producción de Next usará PostgreSQL como recurso independiente de Dokploy, separado de las bases legacy existentes. Recurso, red, SSL, secretos y backup/restauración siguen pendientes.
+- Producción de Next usará el recurso Database → PostgreSQL de Dokploy, separado de Compose y de las bases legacy existentes. El recurso, red, SSL y secretos siguen pendientes; el usuario introducirá la contraseña y los valores de secretos en Dokploy. La preparación de backup/restauración se pospone hasta inmediatamente antes de importar la lista IPTV real, según la decisión del usuario.
 - Las bases legacy de producción y desarrollo se observaron en el panel, pero no tenían proveedor de copias configurado. No se inspeccionaron datos ni valores de conexión; su relación con los servicios debe verificarse antes de cualquier retirada.
 - `DATABASE_URL` es el nombre del secreto de conexión. Sus valores nunca se documentan ni imprimen con Compose resuelto.
 - `compose.yml` usa la conexión externa definida por `DATABASE_URL`. En el entorno local, `compose.local.yml` la reemplaza por PostgreSQL 17 aislada, dentro del volumen `walactv-local-postgres-data`, sin publicar el puerto de base de datos al host.
@@ -55,7 +76,7 @@ El despliegue mantiene `API_REPLICAS=1`; `VOD_TRANSCODING_ENABLED` queda en `fal
 
 ## Configuración
 
-Variables: `DATABASE_URL`, `APP_ORIGIN`, `SESSION_SECRET`, `PROVIDER_IDENTITY_KEY`, `IPTV_ENCRYPTION_KEY`, `IPTV_ALLOWED_HOSTS`, `TMDB_API_TOKEN` (opcional), `API_REPLICAS`, `BOOTSTRAP_ADMIN_USERNAME` y `BOOTSTRAP_ADMIN_PASSWORD`. `TMDB_API_TOKEN` se configura solo como secreto runtime del servicio API; `.env.example` solo incluye el nombre vacío, nunca un valor real. No llega a builds, bundles, respuestas ni logs. Si no está configurado, la metadata indica `disabled` y catálogo/playback funcionan igual. `API_REPLICAS` debe permanecer en `1` mientras los leases, streams e importaciones activas de IPTV estén en memoria. El override local añade `LOCAL_POSTGRES_DB`, `LOCAL_POSTGRES_USER` y `LOCAL_POSTGRES_PASSWORD`. `./scripts/setup-local.sh` crea `.env` ignorado con permisos 600, genera secretos locales y no muestra sus valores. Conserva un `.env` existente y no genera token TMDB. `IPTV_ALLOWED_HOSTS` queda vacío hasta que se añada manualmente el dominio proveedor a `.env`; no se incluye URL, usuario ni contraseña de IPTV. Las credenciales IPTV entran por POST y se cifran en Go antes de guardarse en PostgreSQL. `IPTV_ENCRYPTION_KEY` es base64 de exactamente 32 bytes, estable y externa a la base/Git; se pasa solo al proceso API, nunca a build args ni al navegador.
+Variables: `DATABASE_URL`, `APP_ORIGIN`, `SESSION_SECRET`, `PROVIDER_IDENTITY_KEY`, `IPTV_ENCRYPTION_KEY`, `IPTV_ALLOWED_HOSTS`, `TMDB_API_TOKEN` (opcional), `API_REPLICAS`, `BOOTSTRAP_ADMIN_USERNAME` y `BOOTSTRAP_ADMIN_PASSWORD`. El usuario configurará en privado los valores productivos en Dokploy; guardar y compartir solo nombres de variables y referencias, nunca valores. `DATABASE_URL` apuntará al recurso Database → PostgreSQL nuevo. `TMDB_API_TOKEN` se configura solo como secreto runtime del servicio API; `.env.example` solo incluye el nombre vacío, nunca un valor real. No llega a builds, bundles, respuestas ni logs. Si no está configurado, la metadata indica `disabled` y catálogo/playback funcionan igual. `API_REPLICAS` debe permanecer en `1` mientras los leases, streams e importaciones activas de IPTV estén en memoria. El override local añade `LOCAL_POSTGRES_DB`, `LOCAL_POSTGRES_USER` y `LOCAL_POSTGRES_PASSWORD`. `./scripts/setup-local.sh` crea `.env` ignorado con permisos 600, genera secretos locales y no muestra sus valores. Conserva un `.env` existente y no genera token TMDB. `IPTV_ALLOWED_HOSTS` es opcional: vacío permite proveedores Xtream en cualquier dominio, sujeto a validación DNS/IP pública; alta y control conservan HTTP:80 y HTTPS:443. Una lista separada por comas conserva la restricción por host. No se incluye URL, usuario ni contraseña de IPTV. Las credenciales IPTV entran por POST y se cifran en Go antes de guardarse en PostgreSQL. `IPTV_ENCRYPTION_KEY` es base64 de exactamente 32 bytes, estable y externa a la base/Git; se pasa solo al proceso API, nunca a build args ni al navegador.
 
 ## Arranque local
 
@@ -71,7 +92,7 @@ La web escucha solo en `127.0.0.1:8081`; Nginx entrega `/api/` a Go por la red i
 
 Para parar la aplicación y conservar datos: `docker compose -f compose.yml -f compose.local.yml down`. Para eliminar intencionalmente la base **local** y su volumen: añade `-v`. Esto no modifica ninguna base externa.
 
-El Compose base omite PostgreSQL local y requiere `DATABASE_URL` del recurso PostgreSQL externo. El archivo `compose.dokploy.yml` es el punto de entrada productivo. No usar `compose.local.yml` en Dokploy. El nuevo destino, rama, Auto Deploy, PostgreSQL propia, red, SSL, backups y secretos productivos siguen pendientes de configuración y verificación. El dominio final está elegido y permanece en el servicio anterior hasta el corte.
+El Compose base omite PostgreSQL local y requiere `DATABASE_URL` del recurso PostgreSQL externo. El archivo `compose.dokploy.yml` es el punto de entrada productivo. No usar `compose.local.yml` en Dokploy. El proyecto y `WEB NEXT` ya están vinculados a `main` y `compose.dokploy.yml`, con Auto Deploy apagado; todavía no se ha desplegado Next. PostgreSQL, red, SSL y secretos productivos siguen pendientes. Los backups se prepararán justo antes de importar la lista IPTV real; no se cargarán esos datos antes. El dominio final está elegido y permanece en el servicio anterior hasta el corte.
 
 ## Comprobaciones
 
@@ -81,7 +102,7 @@ Tras implementar se verificarán los comandos Go, web, validación Compose sin s
 
 `docker compose -f compose.yml -f compose.local.yml up --build -d` crea el PostgreSQL independiente, ejecuta `walactv migrate`, `walactv bootstrap-admin` y después `walactv serve`. Los jobs terminaron con código 0; PostgreSQL/API/web saludables. Migradores concurrentes y bootstrap repetido comprobados. `nginx -t`, Compose `config --quiet` y `/api/v1/health` correctos. Ver `docs/local-verification.md` para evidencia y límites.
 
-El repositorio público y el servicio Dokploy `WEB NEXT` existen; el primer commit se publicó en `main` y la conexión Compose quedó guardada con Auto Deploy apagado. Aún no se ha ejecutado despliegue ni se han creado PostgreSQL/secrets para Next. El dominio de la fuente IPTV se configura explícitamente en `IPTV_ALLOWED_HOSTS` del entorno privado; no publicar la configuración local.
+El repositorio público y el servicio Dokploy `WEB NEXT` existen; el primer commit se publicó en `main` y la conexión Compose quedó guardada con Auto Deploy apagado. Aún no se ha ejecutado despliegue ni se han creado PostgreSQL/secrets para Next. `IPTV_ALLOWED_HOSTS` puede permanecer vacío para aceptar proveedores con direcciones públicas; si se configura, mantener la lista privada del entorno.
 
 ## Actualización de persistencia privada · 2026-10-28
 
@@ -111,7 +132,7 @@ Antes de aplicar 004 a la PostgreSQL local aislada, se creó `artifacts/backups/
 
 ## Destinos dinámicos de medios
 
-`IPTV_ALLOWED_HOSTS` sigue autorizando los dominios de las fuentes y del plano de control. Los servidores públicos de medios derivados de una reproducción autorizada, incluidas redirecciones y referencias HLS, no necesitan añadirse individualmente. La API valida las direcciones resueltas y el puerto en cada nueva conexión, y limita las redirecciones. Esto amplía la confianza en los destinos públicos indicados por el proveedor. No requiere migraciones, servicios ni variables nuevos. Un rollback de imagen vuelve a exigir configurar los CDN explícitamente en `IPTV_ALLOWED_HOSTS`; la base de datos permanece compatible.
+`IPTV_ALLOWED_HOSTS`, cuando contiene hosts, restringe las fuentes y el plano de control. Vacío o ausente permite cualquier dominio proveedor, sujeto a controles de DNS, IP pública y puertos. Los servidores públicos de medios derivados de una reproducción autorizada, incluidas redirecciones y referencias HLS, no necesitan añadirse individualmente. La API valida las direcciones resueltas y el puerto en cada nueva conexión, y limita las redirecciones. Esto amplía la confianza en los destinos públicos indicados por el proveedor. No requiere migraciones, servicios ni variables nuevos. Una imagen anterior vuelve a exigir la lista para alta y reproducción; antes de un rollback hay que configurar allí los dominios de las fuentes existentes.
 
 ## Diagnóstico y compatibilidad de medios VOD
 
@@ -124,3 +145,5 @@ Las reproducciones autorizadas admiten hasta ocho redirecciones y puertos HTTP 8
 Compose limita el servicio API completo a 2 CPU, 1536 MiB y 128 procesos; la salida efímera usa un tmpfs de 256 MiB. Solo se permite un trabajo de conversión global, sin cola y conservando el lease IPTV existente. Vídeo 4K HEVC puede no convertirse en tiempo real dentro de ese presupuesto y se detiene tras los límites de preparación/inactividad. La búsqueda reinicia la conversión en el offset solicitado; la barra completa solo aparece con duración fiable. La salida HLS rueda aproximadamente 48 segundos; si se pausa más de 45 segundos, reanuda regenerando desde la posición lógica guardada. Al salir, cerrar sesión, eliminar la fuente o detener la API se cancelan procesos y se borra el trabajo.
 
 En instalaciones locales, establecer `VOD_TRANSCODING_ENABLED=true` en `.env` y reconstruir Compose para habilitarlo. Producción requeriría evaluar CPU/RAM y habilitar la imagen/variable solo después de medir allí. No requiere migraciones de base de datos ni puertos/servicios/volúmenes persistentes nuevos. Un rollback de imagen cancela y elimina conversiones temporales; PostgreSQL no cambia.
+
+La misma opción habilita `Buscar pistas del archivo`: ffprobe usa el slot VOD y gateway loopback, con límites de 10 s, 16 MiB, 32 solicitudes y 256 KiB de salida JSON; el agotamiento se informa como inventario parcial. El inventario es efímero por playback. La imagen verifica ffprobe, muxer WebVTT y decoders textuales SubRip, ASS y mov_text. Las pistas ASS pierden estilos y PGS/VobSub se muestran como no seleccionables, sin OCR. La salida WebVTT comparte el proceso FFmpeg, su entrada, slot y cancelación, y se limita a 512 cues, 2 MiB totales y 16 KiB por cue. No hay cambios de Compose, variables, PostgreSQL externa de Dokploy ni migraciones. La entrega incremental y sincronía por contenedor aún requieren verificación con fixtures antes de habilitar el uso operativo.

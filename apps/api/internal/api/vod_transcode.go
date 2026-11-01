@@ -27,26 +27,35 @@ const (
 )
 
 type vodJob struct {
-	generation     string
-	offset         float64
-	dir            string
-	ctx            context.Context
-	cancel         context.CancelFunc
-	done           chan struct{}
-	started        chan struct{}
-	startOnce      sync.Once
-	doneOnce       sync.Once
-	inputURL       string
-	inputSlots     chan struct{}
-	lastUse        atomic.Int64
-	failed         atomic.Bool
-	bytes          atomic.Int64
-	stopParent     func() bool
-	pending        bool
-	gatewayWG      sync.WaitGroup
-	diagnosticMu   sync.Mutex
-	failureCause   string
-	upstreamStatus atomic.Int32
+	generation      string
+	offset          float64
+	trackRevision   string
+	audioTrackID    string
+	subtitleTrackID string
+	audioStream     int
+	subtitleStream  int
+	dir             string
+	ctx             context.Context
+	cancel          context.CancelFunc
+	done            chan struct{}
+	started         chan struct{}
+	startOnce       sync.Once
+	doneOnce        sync.Once
+	inputURL        string
+	inputSlots      chan struct{}
+	lastUse         atomic.Int64
+	failed          atomic.Bool
+	bytes           atomic.Int64
+	stopParent      func() bool
+	pending         bool
+	gatewayWG       sync.WaitGroup
+	diagnosticMu    sync.Mutex
+	failureCause    string
+	upstreamStatus  atomic.Int32
+	cueMu           sync.Mutex
+	cues            []vodCue
+	cueBytes        int
+	subtitleWG      sync.WaitGroup
 }
 
 func (j *vodJob) stop() {
@@ -89,6 +98,8 @@ type vodTranscodeView struct {
 	ManifestURL     string  `json:"manifestUrl"`
 	OffsetSeconds   float64 `json:"offsetSeconds"`
 	DurationSeconds float64 `json:"durationSeconds"`
+	AudioTrackID    string  `json:"audioTrackId,omitempty"`
+	SubtitleTrackID string  `json:"subtitleTrackId,omitempty"`
 }
 
 func (a *API) startVODTranscode(w http.ResponseWriter, r *http.Request) {
@@ -97,7 +108,10 @@ func (a *API) startVODTranscode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var input struct {
-		OffsetSeconds float64 `json:"offsetSeconds"`
+		OffsetSeconds   float64 `json:"offsetSeconds"`
+		TrackRevision   string  `json:"trackRevision,omitempty"`
+		AudioTrackID    string  `json:"audioTrackId,omitempty"`
+		SubtitleTrackID string  `json:"subtitleTrackId,omitempty"`
 	}
 	if decodeJSON(w, r, &input) != nil || input.OffsetSeconds < 0 || input.OffsetSeconds > 24*60*60 {
 		writeError(w, http.StatusBadRequest, "INVALID_INPUT", "La posición solicitada no es válida")
@@ -116,7 +130,28 @@ func (a *API) startVODTranscode(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusNotFound, "NOT_FOUND", "Playback no encontrado")
 		return
 	}
-	if p.VOD != nil && p.VOD.offset == input.OffsetSeconds && !p.VOD.failed.Load() {
+	audioStream, subtitleStream := -1, -1
+	if input.AudioTrackID != "" || input.SubtitleTrackID != "" || input.TrackRevision != "" {
+		if p.Tracks == nil || input.TrackRevision == "" || input.TrackRevision != p.Tracks.revision {
+			a.private.mu.Unlock()
+			writeError(w, http.StatusConflict, "TRACKS_STALE", "El inventario de pistas ha cambiado; vuelve a buscar las pistas")
+			return
+		}
+		for _, track := range p.Tracks.tracks {
+			if track.ID == input.AudioTrackID && track.Type == "audio" && track.Selectable {
+				audioStream = track.streamIndex
+			}
+			if track.ID == input.SubtitleTrackID && track.Type == "subtitle" && track.Selectable {
+				subtitleStream = track.streamIndex
+			}
+		}
+		if input.AudioTrackID != "" && audioStream < 0 || input.SubtitleTrackID != "" && subtitleStream < 0 {
+			a.private.mu.Unlock()
+			writeError(w, http.StatusBadRequest, "INVALID_TRACK", "La pista solicitada no está disponible")
+			return
+		}
+	}
+	if p.VOD != nil && p.VOD.offset == input.OffsetSeconds && p.VOD.audioTrackID == input.AudioTrackID && p.VOD.subtitleTrackID == input.SubtitleTrackID && !p.VOD.failed.Load() {
 		job := p.VOD
 		if job.pending {
 			a.private.mu.Unlock()
@@ -199,6 +234,8 @@ func (a *API) startVODTranscode(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadGateway, "TRANSCODER_UNAVAILABLE", "No se pudo preparar la versión compatible")
 		return
 	}
+	job.trackRevision, job.audioTrackID, job.subtitleTrackID = input.TrackRevision, input.AudioTrackID, input.SubtitleTrackID
+	job.audioStream, job.subtitleStream = audioStream, subtitleStream
 	job.stopParent = context.AfterFunc(p.Ctx, job.cancel)
 	a.private.mu.Lock()
 	if a.private.shuttingDown || a.private.playbacks[id] != p || p.Closing || p.VOD != marker || marker.ctx.Err() != nil {
@@ -360,7 +397,7 @@ func (a *API) serveVODAsset(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *API) vodView(p *playback, job *vodJob) vodTranscodeView {
-	return vodTranscodeView{PlaybackID: p.ID, Generation: job.generation, ManifestURL: fmt.Sprintf("/api/v1/playbacks/%s/transcode/%s/index.m3u8", p.ID, job.generation), OffsetSeconds: job.offset, DurationSeconds: 0}
+	return vodTranscodeView{PlaybackID: p.ID, Generation: job.generation, ManifestURL: fmt.Sprintf("/api/v1/playbacks/%s/transcode/%s/index.m3u8", p.ID, job.generation), OffsetSeconds: job.offset, DurationSeconds: 0, AudioTrackID: job.audioTrackID, SubtitleTrackID: job.subtitleTrackID}
 }
 
 func (a *API) clearVODMarker(p *playback, job *vodJob) {
@@ -400,6 +437,14 @@ func (a *API) startVODProcess(p *playback, job *vodJob) error {
 	if err != nil {
 		return err
 	}
+	var cueReader, cueWriter *os.File
+	if job.subtitleStream >= 0 {
+		cueReader, cueWriter, err = os.Pipe()
+		if err != nil {
+			_ = listener.Close()
+			return err
+		}
+	}
 	secretPath := "/input"
 	job.inputURL = "http://" + listener.Addr().String() + secretPath
 	inputServer := &http.Server{Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -408,20 +453,34 @@ func (a *API) startVODProcess(p *playback, job *vodJob) error {
 		a.serveVODInput(w, r, p, job, secretPath)
 	}), ReadHeaderTimeout: 3 * time.Second, IdleTimeout: 10 * time.Second}
 	go func() { _ = inputServer.Serve(listener) }()
-	args := buildVODFFmpegArgs(job.inputURL, job.dir, p.RootExtension(), job.offset)
+	args := buildVODFFmpegArgsWithTracks(job.inputURL, job.dir, p.RootExtension(), job.offset, job.audioStream, job.subtitleStream)
 	cmd := exec.CommandContext(job.ctx, "ffmpeg", args...)
+	if cueWriter != nil {
+		cmd.ExtraFiles = []*os.File{cueWriter}
+	}
 	cmd.Env = []string{"PATH=/usr/bin:/bin", "HOME=/tmp", "LANG=C"}
 	cmd.Stdin = nil
 	cmd.Stdout = io.Discard
 	cmd.Stderr = io.Discard
 	cmd.WaitDelay = 3 * time.Second
 	if err := cmd.Start(); err != nil {
+		if cueReader != nil {
+			_ = cueReader.Close()
+		}
+		if cueWriter != nil {
+			_ = cueWriter.Close()
+		}
 		_ = inputServer.Close()
 		_ = os.RemoveAll(job.dir)
 		if job.stopParent != nil {
 			job.stopParent()
 		}
 		return err
+	}
+	if cueWriter != nil {
+		_ = cueWriter.Close()
+		job.subtitleWG.Add(1)
+		go func() { defer job.subtitleWG.Done(); a.readVODSubtitles(job, cueReader) }()
 	}
 	go func() {
 		defer close(job.done)
@@ -433,6 +492,7 @@ func (a *API) startVODProcess(p *playback, job *vodJob) error {
 			_ = inputServer.Close()
 			_ = inputServer.Shutdown(context.Background())
 			job.gatewayWG.Wait()
+			job.subtitleWG.Wait()
 			_ = os.RemoveAll(job.dir)
 			if job.stopParent != nil {
 				job.stopParent()
@@ -528,6 +588,10 @@ func (p *playback) RootExtension() string {
 }
 
 func buildVODFFmpegArgs(inputURL, outputDir, ext string, offset float64) []string {
+	return buildVODFFmpegArgsWithTracks(inputURL, outputDir, ext, offset, -1, -1)
+}
+
+func buildVODFFmpegArgsWithTracks(inputURL, outputDir, ext string, offset float64, audioStream, subtitleStream int) []string {
 	demuxer := map[string]string{"mkv": "matroska", "mp4": "mov", "avi": "avi", "ts": "mpegts"}[ext]
 	if demuxer == "" {
 		demuxer = "mov"
@@ -543,7 +607,16 @@ func buildVODFFmpegArgs(inputURL, outputDir, ext string, offset float64) []strin
 	if offset > 0 {
 		args = append(args, "-ss", strconv.FormatFloat(offset, 'f', 3, 64))
 	}
-	args = append(args, "-f", demuxer, "-seekable", "1", "-i", inputURL, "-map", "0:v:0?", "-map", "0:a:0?", "-sn", "-dn", "-vf", "scale='min(1280,iw)':'min(720,ih)':force_original_aspect_ratio=decrease:force_divisible_by=2", "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p", "-crf", "23", "-maxrate", "2500k", "-bufsize", "5000k", "-threads:v", "2", "-c:a", "aac", "-ac", "2", "-b:a", "128k", "-threads:a", "1", "-force_key_frames", "expr:gte(t,n_forced*4)", "-f", "hls", "-hls_time", "4", "-hls_list_size", "12", "-hls_flags", "delete_segments+independent_segments+temp_file", "-hls_segment_filename", filepath.Join(outputDir, "segment_%06d.ts"), "-progress", "pipe:1", filepath.Join(outputDir, "index.m3u8"))
+	args = append(args, "-f", demuxer, "-seekable", "1", "-i", inputURL, "-map", "0:v:0?")
+	if audioStream >= 0 {
+		args = append(args, "-map", fmt.Sprintf("0:%d?", audioStream))
+	} else {
+		args = append(args, "-map", "0:a:0?")
+	}
+	args = append(args, "-dn", "-vf", "scale='min(1280,iw)':'min(720,ih)':force_original_aspect_ratio=decrease:force_divisible_by=2", "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p", "-crf", "23", "-maxrate", "2500k", "-bufsize", "5000k", "-threads:v", "2", "-c:a", "aac", "-ac", "2", "-b:a", "128k", "-threads:a", "1", "-force_key_frames", "expr:gte(t,n_forced*4)", "-f", "hls", "-hls_time", "4", "-hls_list_size", "12", "-hls_flags", "delete_segments+independent_segments+temp_file", "-hls_segment_filename", filepath.Join(outputDir, "segment_%06d.ts"), "-progress", "pipe:1", filepath.Join(outputDir, "index.m3u8"))
+	if subtitleStream >= 0 {
+		args = append(args, "-map", fmt.Sprintf("0:%d?", subtitleStream), "-c:s", "webvtt", "-flush_packets", "1", "-f", "webvtt", "pipe:3")
+	}
 	return args
 }
 

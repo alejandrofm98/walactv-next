@@ -1,17 +1,18 @@
 # Publicación y sustitución en Dokploy
 
-Este runbook prepara una publicación nueva y aislada de WalacTV Next. No migra datos ni cuentas de la web anterior. Dokploy se revalidó el 2026-10-30; el proyecto y servicio se crearon y quedaron vinculados al repositorio y Compose. La PostgreSQL, secretos, red y primer despliegue siguen pendientes.
+Este runbook prepara una publicación aislada de WalacTV Next. No migra datos ni cuentas de la web anterior. Revalidación del panel en modo de solo lectura, 2026-11-01, Dokploy v0.30.10: el proyecto `WALACTV NEXT` tiene `DB NEXT` y `WEB NEXT` en `production`; `WEB NEXT` apunta a `main` y `./compose.dokploy.yml`, Auto Deploy está activado con trigger `On Push`, y el panel muestra exitoso el commit `a83c78d` seguido por `c243fc50`. El push solicitado actualizará el entorno de producción. No se consultaron valores de secretos ni se cambió configuración del panel. Los backups se configurarán justo antes de importar la lista IPTV real; no se añadirá esa lista antes.
 
 ## 1. Confirmar el destino
 
 Usar el inventario privado local, revalidado en Dokploy el 2026-10-30, como referencia de la web antigua y de las ramas con Auto Deploy. El servicio nuevo ya está configurado explícitamente con `main`; antes de futuros pushes, comprobar refspec y todos los destinos que recibirían esa rama. Confirmar el estado recuperable de la web anterior justo antes del corte.
 
-El proyecto separado `WALACTV NEXT` y el servicio Compose `WEB NEXT` ya existen. El servicio está configurado con el repositorio público, la rama `main` y `compose.dokploy.yml`; Auto Deploy permanece apagado. El dominio final será el hostname que ahora usa `WEB`; su referencia exacta está en el inventario privado. No cambiar su ruta durante el build y despliegue inicial.
+El proyecto separado `WALACTV NEXT` y el servicio Compose `WEB NEXT` ya existen. El servicio está configurado con el repositorio público, la rama `main` y `compose.dokploy.yml`; la revalidación actual confirma Auto Deploy activo. Cualquier push a `main` inicia un despliegue de producción. El dominio final fue elegido por el usuario; su referencia exacta permanece privada. No cambiar rutas ni configuración del dominio durante este push.
 
 ## 2. Preparar PostgreSQL y redes
 
-- Crear o seleccionar una PostgreSQL nueva como recurso independiente de Compose. No reutilizar la base de la aplicación anterior ni la base local.
-- Confirmar versión, dirección interna, puerto, SSL requerido, red compartida y método de backup/restore. El recurso debe quedar accesible desde `migrate`, `bootstrap-admin` y `api` sin publicar PostgreSQL a Internet.
+- Crear la base como recurso **Database → PostgreSQL** de Dokploy, independiente de Compose. No reutilizar la base de la aplicación anterior ni la base local. El usuario introducirá la contraseña durante su creación.
+- Confirmar versión, dirección interna, puerto, SSL requerido y red compartida. El recurso debe quedar accesible desde `migrate`, `bootstrap-admin` y `api` sin publicar PostgreSQL a Internet.
+- El panel no tiene proveedor S3/R2 configurado. El usuario pospuso configurar backups hasta inmediatamente antes de importar su lista IPTV real. Se puede preparar una instancia vacía, pero no se cargará la lista real hasta tener destino y restauración comprobados, además de una copia recuperable de `IPTV_ENCRYPTION_KEY`.
 - Configurar `DOKPLOY_NETWORK_NAME` con el nombre real de la red que comparte la base y el proxy de Dokploy. La configuración productiva usa por defecto `dokploy-network`, pero verificarlo en el panel/host antes del primer despliegue.
 - Configurar el servicio Compose con el archivo `compose.dokploy.yml`. Este archivo extiende las definiciones de `compose.yml`; no añadir `compose.local.yml`.
 - La red `default` conserva `web → api`; la red Dokploy conecta a PostgreSQL los tres procesos que la necesitan y permite al proxy alcanzar `web`. La API y PostgreSQL no requieren puertos publicados.
@@ -27,9 +28,9 @@ El archivo `.env.example` solo sirve para validar el formato; no copiar sus valo
 
 ## 3. Configurar el servicio nuevo
 
-En Dokploy, el servicio ya está vinculado al repositorio público `alejandrofm98/walactv-next`, rama `main`, tipo Docker Compose y archivo `compose.dokploy.yml`. Mantener Auto Deploy apagado hasta completar la configuración privada y tener lista la primera instalación.
+En Dokploy, el servicio está vinculado al repositorio público `alejandrofm98/walactv-next`, rama `main`, tipo Docker Compose y archivo `compose.dokploy.yml`. Auto Deploy está activo con trigger `On Push`, verificado el 2026-11-01; cualquier publicación en `main` alcanza producción. No se modificarán variables, secretos ni opciones de Dokploy como parte de este push.
 
-Crear secretos nuevos para este servicio y cargarlos solo en la configuración privada de Dokploy. Registrar los nombres, no los valores:
+El usuario creará y cargará valores nuevos solo en la configuración privada de Dokploy. Registrar los nombres, no los valores:
 
 | Variable | Configuración |
 |---|---|
@@ -40,7 +41,7 @@ Crear secretos nuevos para este servicio y cargarlos solo en la configuración p
 | `IPTV_ENCRYPTION_KEY` | Clave base64 nueva que codifique exactamente 32 bytes; guardar copia recuperable fuera de la base y Git |
 | `BOOTSTRAP_ADMIN_USERNAME` | Nombre de la cuenta inicial de Next, máximo 120 bytes |
 | `BOOTSTRAP_ADMIN_PASSWORD` | Contraseña inicial nueva de 12 a 72 bytes; recuperarla desde el almacén privado de Dokploy |
-| `IPTV_ALLOWED_HOSTS` | Dominios permitidos del proveedor, sin ruta, usuario ni contraseña |
+| `IPTV_ALLOWED_HOSTS` | Opcional: vacío permite cualquier dominio proveedor con IP pública; lista separada por comas restringe por host |
 | `API_REPLICAS` | Mantener `1` |
 | `VOD_TRANSCODING_ENABLED` | Mantener `false` hasta medir recursos del servidor |
 | `TMDB_API_TOKEN` | Opcional; runtime de API únicamente |
@@ -57,9 +58,10 @@ Antes de transferir el dominio antiguo, verificar en el host de Dokploy o median
 1. Commit y rama servidos corresponden al repositorio y destino confirmados.
 2. `migrate` y `bootstrap-admin` finalizan con código 0; la API informa salud y web informa salud en su contenedor aunque la ruta pública aún permanezca en el servicio anterior.
 3. API y trabajos tienen conectividad interna con la PostgreSQL nueva; el proxy llega a web; API y base no publican puertos.
-4. Iniciar sesión con la cuenta Next recién aprovisionada, añadir la lista privada del usuario e importar el catálogo.
-5. Probar búsqueda/filtros y una reproducción autorizada cada vez. Cerrar la reproducción al terminar para no abrir sesiones simultáneas con el proveedor.
-6. Confirmar que el navegador, logs e informe no muestran secretos ni URL IPTV con credenciales.
+4. Iniciar sesión con la cuenta Next recién aprovisionada. Antes de introducir la lista privada, configurar un destino de backup y comprobar restauración junto con la custodia externa de `IPTV_ENCRYPTION_KEY`.
+5. Solo después de esa comprobación, añadir la lista privada del usuario e importar el catálogo.
+6. Probar búsqueda/filtros y una reproducción autorizada cada vez. Cerrar la reproducción al terminar para no abrir sesiones simultáneas con el proveedor.
+7. Confirmar que el navegador, logs e informe no muestran secretos ni URL IPTV con credenciales.
 
 Anotar commit, versión de esquema, resultados de salud y límites de la prueba en `docs/deployment.md`. Un estado “push completado” no es evidencia de despliegue ni de salud. La aceptación de navegador se hará justo después de transferir el dominio, manteniendo lista la reversión de ruta.
 

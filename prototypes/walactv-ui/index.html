@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="es" data-direction="butaca" data-size="wide">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#191713">
+    <meta name="description" content="Exploración visual interactiva para WalacTV.">
+    <title>WalacTV · Propuestas de interfaz</title>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+    <link rel="stylesheet" href="./mockups.css">
+  </head>
+  <body>
+    <svg class="icon-defs" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+      <symbol id="i-screen" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="12" rx="2"/><path d="m8 20 4-3.5 4 3.5M8.5 8.5h7M8.5 12h4"/></symbol>
+      <symbol id="i-live" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.6"/><path d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M4.8 4.8a10.2 10.2 0 0 0 0 14.4M19.2 4.8a10.2 10.2 0 0 1 0 14.4"/></symbol>
+      <symbol id="i-film" viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="16" rx="2"/><path d="M7 4v16M17 4v16M3.5 9h3.5m-3.5 6h3.5m10-6h3.5m-3.5 6h3.5"/></symbol>
+      <symbol id="i-series" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="13" rx="2"/><path d="M8 21h8M9 2.5h6M9 10h6m-6 3h4"/></symbol>
+      <symbol id="i-heart" viewBox="0 0 24 24"><path d="M20.8 8.8c0 5-8.8 10-8.8 10S3.2 13.8 3.2 8.8a4.5 4.5 0 0 1 8.8-1.2 4.5 4.5 0 0 1 8.8 1.2Z"/></symbol>
+      <symbol id="i-link" viewBox="0 0 24 24"><path d="M9.6 14.4a4.5 4.5 0 0 0 6.4 0l3.1-3.1a4.5 4.5 0 0 0-6.4-6.4l-1.8 1.8M14.4 9.6a4.5 4.5 0 0 0-6.4 0l-3.1 3.1a4.5 4.5 0 0 0 6.4 6.4l1.8-1.8"/></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.3"/><path d="m15.5 15.5 4.4 4.4"/></symbol>
+      <symbol id="i-filter" viewBox="0 0 24 24"><path d="M4 6h16M7 12h10m-7 6h4"/><circle cx="8" cy="6" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="12" cy="18" r="1.5"/></symbol>
+      <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.6 9a7 7 0 0 1 11.7-2L20 9M4 15l2.7 2a7 7 0 0 0 11.7-2"/></symbol>
+      <symbol id="i-play" viewBox="0 0 24 24"><path d="m8 5.5 11 6.5-11 6.5z" fill="currentColor" stroke="none"/></symbol>
+      <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5.5v13m8-13v13" stroke-width="2.8"/></symbol>
+      <symbol id="i-volume" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4Z"/><path d="M16 9a4 4 0 0 1 0 6m2.5-9a8 8 0 0 1 0 12"/></symbol>
+      <symbol id="i-fullscreen" viewBox="0 0 24 24"><path d="M8 4H4v4m12-4h4v4M4 16v4h4m12-4v4h-4"/></symbol>
+      <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c.6-3.2 3-5 7-5s6.4 1.8 7 5"/></symbol>
+      <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1.1 1.2.9-1.5 2.6-1.4-.6a8 8 0 0 1-1.5.9l-.2 1.6h-3l-.2-1.6a8 8 0 0 1-1.5-.9l-1.4.6-1.5-2.6 1.2-.9a7 7 0 0 1 0-1.8l-1.2-.9 1.5-2.6 1.4.6a8 8 0 0 1 1.5-.9l.2-1.6h3l.2 1.6a8 8 0 0 1 1.5.9l1.4-.6 1.5 2.6-1.2.9a7 7 0 0 1 0 1.8Z" transform="translate(-1 -2) scale(1.08)"/></symbol>
+      <symbol id="i-exit" viewBox="0 0 24 24"><path d="M10 4H5.5A1.5 1.5 0 0 0 4 5.5v13A1.5 1.5 0 0 0 5.5 20H10M14 8l4 4-4 4m4-4H9"/></symbol>
+      <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+      <symbol id="i-back" viewBox="0 0 24 24"><path d="m14.5 5-7 7 7 7M8 12h12"/></symbol>
+      <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+      <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5m0-8h.01"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7"/></symbol>
+      <symbol id="i-alert" viewBox="0 0 24 24"><path d="m12 3 9 17H3L12 3Z"/><path d="M12 9v5m0 3h.01"/></symbol>
+      <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="19" cy="12" r="1" fill="currentColor"/></symbol>
+      <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 3 1.4 6.6L20 12l-6.6 1.4L12 20l-1.4-6.6L4 12l6.6-2.4L12 3Z"/></symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+    </svg>
+
+    <header class="lab-header">
+      <a class="lab-brand" href="#top" aria-label="WalacTV mockups, inicio">
+        <span class="brand-mark"><svg><use href="#i-screen"/></svg></span>
+        <span><strong>WalacTV</strong><small>Estudio visual · 01</small></span>
+      </a>
+      <div class="lab-actions"><span class="sample-note"><svg><use href="#i-info"/></svg> Prototipo con datos de muestra</span><a class="file-link" href="./favicon.svg" target="_blank" rel="noreferrer">Ver favicon</a></div>
+    </header>
+
+    <main id="top" class="lab-main">
+      <section class="intro">
+        <p class="eyebrow"><span></span> Exploración de interfaz · 3 direcciones</p>
+        <h1>Una web para encontrar<br class="desktop-break"> <em>algo que ver.</em></h1>
+        <p class="intro-copy">Tres maneras de llevar Directo, Películas, Series y tu lista a una interfaz propia de WalacTV. Cambia de pantalla, ajusta el tamaño y compara el lenguaje visual.</p>
+      </section>
+
+      <section class="direction-picker" aria-label="Dirección visual">
+        <button class="direction-choice is-selected" data-direction-button="butaca" aria-pressed="true">
+          <span class="direction-index">01</span><span class="direction-copy"><strong>Butaca</strong><small>Cálida · editorial · familiar</small></span><span class="direction-dot"></span>
+        </button>
+        <button class="direction-choice" data-direction-button="guia" aria-pressed="false">
+          <span class="direction-index">02</span><span class="direction-copy"><strong>Guía</strong><small>Compacta · directa · práctica</small></span><span class="direction-dot"></span>
+        </button>
+        <button class="direction-choice" data-direction-button="proyeccion" aria-pressed="false">
+          <span class="direction-index">03</span><span class="direction-copy"><strong>Proyección</strong><small>Inmersiva · amplia · enfocada</small></span><span class="direction-dot"></span>
+        </button>
+      </section>
+
+      <section class="preview-tools" aria-label="Controles de vista previa">
+        <div class="screen-picker"><span>VISTA</span>
+          <label class="select-wrap"><svg><use href="#i-screen"/></svg><select id="screen-select" aria-label="Pantalla de muestra">
+            <option value="live">Directo</option><option value="movies">Películas</option><option value="series">Series</option><option value="detail">Ficha de título</option><option value="favorites">Mi lista</option><option value="ace">Ace Stream</option><option value="source">Conectar fuente</option><option value="login">Acceso</option><option value="vod-player">Reproductor VOD</option><option value="live-player">Reproductor en directo</option><option value="kit">Iconos y componentes</option>
+          </select><svg><use href="#i-chevron"/></svg></label>
+        </div>
+        <div class="size-switch" aria-label="Ancho de vista previa"><span>TAMAÑO</span><button data-size-button="wide" class="is-selected" aria-pressed="true">Escritorio</button><button data-size-button="tablet" aria-pressed="false">Tablet</button><button data-size-button="mobile" aria-pressed="false">Móvil</button></div>
+      </section>
+
+      <div class="app-stage" id="app-stage">
+        <div class="app-frame" id="app-frame">
+          <aside class="app-sidebar">
+            <a class="app-brand" href="#top" aria-label="WalacTV, inicio"><span class="app-logo"><svg><use href="#i-screen"/></svg></span><span>Walac<span>TV</span></span></a>
+            <nav class="main-nav" aria-label="Navegación principal">
+              <p class="nav-heading">BIBLIOTECA</p>
+              <button class="nav-item" data-screen-link="live" aria-label="Directo"><svg><use href="#i-live"/></svg><span>Directo</span><i class="nav-count live-count">EN VIVO</i></button>
+              <button class="nav-item" data-screen-link="movies" aria-label="Películas"><svg><use href="#i-film"/></svg><span>Películas</span></button>
+              <button class="nav-item" data-screen-link="series" aria-label="Series"><svg><use href="#i-series"/></svg><span>Series</span></button>
+              <button class="nav-item" data-screen-link="favorites" aria-label="Mi lista"><svg><use href="#i-heart"/></svg><span>Mi lista</span><i class="nav-count">08</i></button>
+              <p class="nav-heading nav-heading-lower">REPRODUCTORES</p>
+              <button class="nav-item" data-screen-link="ace" aria-label="Ace Stream"><svg><use href="#i-link"/></svg><span>Ace Stream</span></button>
+            </nav>
+            <div class="sidebar-spacer"></div>
+            <div class="source-status"><span class="source-indicator"></span><span><strong>Fuente privada</strong><small>Conectada · muestra</small></span><button class="icon-button small" aria-label="Gestionar fuente" data-screen-link="source"><svg><use href="#i-settings"/></svg></button></div>
+            <button class="account-button"><span class="avatar">A</span><span class="account-name"><strong>Alex</strong><small>Cuenta personal</small></span><svg class="account-chevron"><use href="#i-more"/></svg></button>
+          </aside>
+
+          <div class="mobile-app-header"><a class="app-brand" href="#top"><span class="app-logo"><svg><use href="#i-screen"/></svg></span><span>Walac<span>TV</span></span></a><button class="icon-button" aria-label="Buscar" data-screen-link="movies"><svg><use href="#i-search"/></svg></button></div>
+
+          <div class="app-main">
+            <header class="app-topbar"><div class="topbar-left"><a class="compact-brand" href="#top" aria-label="WalacTV, inicio"><span class="app-logo"><svg><use href="#i-screen"/></svg></span></a><nav class="top-nav-compact" aria-label="Navegación principal"><button class="nav-item" data-screen-link="live" aria-label="Directo"><svg><use href="#i-live"/></svg><span>Directo</span></button><button class="nav-item" data-screen-link="movies" aria-label="Películas"><svg><use href="#i-film"/></svg><span>Películas</span></button><button class="nav-item" data-screen-link="series" aria-label="Series"><svg><use href="#i-series"/></svg><span>Series</span></button><button class="nav-item" data-screen-link="favorites" aria-label="Mi lista"><svg><use href="#i-heart"/></svg><span>Mi lista</span></button><button class="nav-item" data-screen-link="ace" aria-label="Ace Stream"><svg><use href="#i-link"/></svg><span>Ace Stream</span></button></nav><div class="crumb"><span>Biblioteca</span><svg><use href="#i-chevron"/></svg><strong id="crumb-label">Directo</strong></div></div><div class="topbar-tools"><button class="icon-button search-shortcut" aria-label="Ir a películas y buscar" data-screen-link="movies"><svg><use href="#i-search"/></svg><span>Buscar</span><kbd>⌘ K</kbd></button><span class="demo-status"><i></i> Muestra</span><div class="account-menu-wrap"><button class="avatar top-avatar account-trigger" id="account-trigger" aria-label="Abrir menú de cuenta" aria-expanded="false" aria-controls="account-menu">A</button><div class="account-popover" id="account-menu" hidden><div class="popover-person"><span class="avatar">A</span><span><strong>Alex</strong><small>Cuenta personal</small></span></div><button data-screen-link="source"><svg><use href="#i-settings"/></svg> Gestionar fuente</button><button data-screen-link="login" class="popover-logout"><svg><use href="#i-exit"/></svg> Cerrar sesión</button></div></div></div></header>
+
+            <section class="screen screen-live" data-screen="live">
+              <div class="page-title-row"><div><p class="eyebrow app-eyebrow">TU TELEVISIÓN</p><h2>Directo</h2></div><button class="button button-secondary" data-screen-link="live-player"><svg><use href="#i-screen"/></svg> Abrir reproductor</button></div>
+              <div class="catalog-controls"><label class="search-field"><svg><use href="#i-search"/></svg><input type="search" placeholder="Buscar canales" aria-label="Buscar canales"><kbd>/</kbd></label><button class="filter-select"><svg><use href="#i-sun"/></svg> Idioma <svg class="chevron"><use href="#i-chevron"/></svg></button><button class="filter-select"><svg><use href="#i-filter"/></svg> Categoría <svg class="chevron"><use href="#i-chevron"/></svg></button><button class="icon-button control-refresh" aria-label="Actualizar lista"><svg><use href="#i-refresh"/></svg></button><span class="result-total">126 canales</span></div>
+              <div class="category-line"><button class="category-chip is-active">Todos <span>126</span></button><button class="category-chip">Noticias <span>18</span></button><button class="category-chip">Deportes <span>24</span></button><button class="category-chip">Cine <span>32</span></button><button class="category-chip">Infantil <span>14</span></button></div>
+              <div class="section-heading"><div><h3>Canales de televisión</h3><p>Lista personal · sincronizada hace 4 min</p></div><button class="text-button" data-screen-link="live-player">Ver reproducción <svg><use href="#i-back"/></svg></button></div>
+              <div class="channel-list">
+                <button class="channel-row" data-screen-link="live-player"><span class="channel-mark mark-news"><svg><use href="#i-live"/></svg></span><span class="channel-name"><strong>Noticias 24</strong><small>Noticias</small></span><span class="channel-language">ES</span><span class="channel-live"><i></i> Disponible</span><span class="channel-arrow"><svg><use href="#i-play"/></svg></span></button>
+                <button class="channel-row" data-screen-link="live-player"><span class="channel-mark mark-cinema"><svg><use href="#i-film"/></svg></span><span class="channel-name"><strong>Cine Norte</strong><small>Cine</small></span><span class="channel-language">ES</span><span class="channel-live"><i></i> Disponible</span><span class="channel-arrow"><svg><use href="#i-play"/></svg></span></button>
+                <button class="channel-row" data-screen-link="live-player"><span class="channel-mark mark-sport"><svg><use href="#i-spark"/></svg></span><span class="channel-name"><strong>Deportes Uno</strong><small>Deportes</small></span><span class="channel-language">ES</span><span class="channel-live"><i></i> Disponible</span><span class="channel-arrow"><svg><use href="#i-play"/></svg></span></button>
+                <button class="channel-row" data-screen-link="live-player"><span class="channel-mark mark-music"><svg><use href="#i-sun"/></svg></span><span class="channel-name"><strong>Mundo Música</strong><small>Música</small></span><span class="channel-language">EN</span><span class="channel-live"><i></i> Disponible</span><span class="channel-arrow"><svg><use href="#i-play"/></svg></span></button>
+                <button class="channel-row" data-screen-link="live-player"><span class="channel-mark mark-family"><svg><use href="#i-screen"/></svg></span><span class="channel-name"><strong>Canal Familiar</strong><small>Entretenimiento</small></span><span class="channel-language">ES</span><span class="channel-live"><i></i> Disponible</span><span class="channel-arrow"><svg><use href="#i-play"/></svg></span></button>
+              </div>
+              <div class="pagination"><span>Mostrando 1–5 de 126 canales</span><button disabled aria-label="Página anterior"><svg><use href="#i-back"/></svg></button><button class="page-current">1</button><button>2</button><button>3</button><span>…</span><button>26</button><button aria-label="Página siguiente"><svg><use href="#i-back"/></svg></button></div>
+            </section>
+
+            <section class="screen screen-movies" data-screen="movies" hidden>
+              <div class="page-title-row"><div><p class="eyebrow app-eyebrow">CATÁLOGO PERSONAL</p><h2>Películas</h2></div><span class="view-caption">Tu lista · orden alfabético</span></div>
+              <div class="catalog-controls"><label class="search-field"><svg><use href="#i-search"/></svg><input type="search" placeholder="Buscar películas" aria-label="Buscar películas"><kbd>/</kbd></label><button class="filter-select">Todos los idiomas <svg class="chevron"><use href="#i-chevron"/></svg></button><button class="filter-select">Todas las categorías <svg class="chevron"><use href="#i-chevron"/></svg></button><span class="result-total">842 títulos</span></div>
+              <div class="section-heading compact-heading"><div><h3>Explorar películas</h3><p>Carteles de muestra · portada ilustrativa</p></div><button class="icon-button" aria-label="Actualizar catálogo"><svg><use href="#i-refresh"/></svg></button></div>
+              <div class="poster-grid">
+                <button class="poster-card" data-screen-link="detail"><span class="poster-art art-1"><i></i><b>INTERSTELLAR</b><small>UNA ODISEA ESPACIAL</small></span><span class="poster-meta"><strong>Interstellar</strong><small>2014 · Ciencia ficción</small></span></button>
+                <button class="poster-card" data-screen-link="detail"><span class="poster-art art-2"><i></i><b>LA LLEGADA</b><small>ESCUCHA</small></span><span class="poster-meta"><strong>La llegada</strong><small>2016 · Ciencia ficción</small></span></button>
+                <button class="poster-card" data-screen-link="detail"><span class="poster-art art-3"><i></i><b>HER</b><small>UNA HISTORIA DE AMOR</small></span><span class="poster-meta"><strong>Her</strong><small>2013 · Romance</small></span></button>
+                <button class="poster-card" data-screen-link="detail"><span class="poster-art art-4"><i></i><b>PARÁSITOS</b><small>UNA FAMILIA</small></span><span class="poster-meta"><strong>Parásitos</strong><small>2019 · Drama</small></span></button>
+                <button class="poster-card" data-screen-link="detail"><span class="poster-art art-5"><i></i><b>MOONLIGHT</b><small>EN TRES ACTOS</small></span><span class="poster-meta"><strong>Moonlight</strong><small>2016 · Drama</small></span></button>
+              </div>
+              <div class="pagination"><span>Página 1 de 85</span><button disabled aria-label="Página anterior"><svg><use href="#i-back"/></svg></button><button class="page-current">1</button><button>2</button><button>3</button><span>…</span><button>85</button><button aria-label="Página siguiente"><svg><use href="#i-back"/></svg></button></div>
+            </section>
+
+            <section class="screen screen-series" data-screen="series" hidden>
+              <div class="page-title-row"><div><p class="eyebrow app-eyebrow">CATÁLOGO PERSONAL</p><h2>Series</h2></div><span class="view-caption">34 series · 218 temporadas</span></div>
+              <div class="catalog-controls"><label class="search-field"><svg><use href="#i-search"/></svg><input type="search" placeholder="Buscar series" aria-label="Buscar series"><kbd>/</kbd></label><button class="filter-select">Todos los idiomas <svg class="chevron"><use href="#i-chevron"/></svg></button><button class="filter-select">Todas las categorías <svg class="chevron"><use href="#i-chevron"/></svg></button><span class="result-total">354 series</span></div>
+              <div class="section-heading compact-heading"><div><h3>Series</h3><p>Carteles de muestra · portada ilustrativa</p></div><button class="text-button">Orden alfabético <svg><use href="#i-chevron"/></svg></button></div>
+              <div class="poster-grid">
+                <button class="poster-card" data-screen-link="detail"><span class="poster-art art-6"><i></i><b>SEVERANCE</b><small>EL TRABAJO NO TERMINA</small></span><span class="poster-meta"><strong>Separación</strong><small>2 temporadas · Ciencia ficción</small></span></button>
+                <button class="poster-card" data-screen-link="detail"><span class="poster-art art-7"><i></i><b>THE BEAR</b><small>EVERY SECOND COUNTS</small></span><span class="poster-meta"><strong>The Bear</strong><small>4 temporadas · Drama</small></span></button>
+                <button class="poster-card" data-screen-link="detail"><span class="poster-art art-8"><i></i><b>DARK</b><small>TODO ESTÁ CONECTADO</small></span><span class="poster-meta"><strong>Dark</strong><small>3 temporadas · Misterio</small></span></button>
+                <button class="poster-card" data-screen-link="detail"><span class="poster-art art-9"><i></i><b>FLEABAG</b><small>ESTÁ BIEN</small></span><span class="poster-meta"><strong>Fleabag</strong><small>2 temporadas · Comedia</small></span></button>
+                <button class="poster-card" data-screen-link="detail"><span class="poster-art art-10"><i></i><b>ATLANTA</b><small>UNA CIUDAD, MUCHAS VIDAS</small></span><span class="poster-meta"><strong>Atlanta</strong><small>4 temporadas · Comedia</small></span></button>
+              </div>
+            </section>
+
+            <section class="screen screen-detail" data-screen="detail" hidden>
+              <button class="back-button" data-screen-link="movies"><svg><use href="#i-back"/></svg> Volver a Películas</button>
+              <div class="detail-layout"><div class="detail-poster poster-art art-1"><i></i><b>INTERSTELLAR</b><small>UNA ODISEA ESPACIAL</small></div><div class="detail-copy"><p class="eyebrow app-eyebrow">PELÍCULA · 2014</p><h2>Interstellar</h2><div class="detail-meta"><span>169 min</span><i></i><span>Ciencia ficción</span><i></i><span>Idioma de muestra</span></div><p class="detail-description">Un grupo de exploradores viaja más allá de esta galaxia para descubrir si la humanidad puede tener un futuro entre las estrellas.</p><div class="detail-actions"><button class="button button-primary" data-screen-link="vod-player"><svg><use href="#i-play"/></svg> Reproducir</button><button class="button button-secondary"><svg><use href="#i-heart"/></svg> Guardar en Mi lista</button></div><p class="metadata-note"><svg><use href="#i-info"/></svg> Ficha de ejemplo · metadata e imagen no conectadas</p></div></div>
+              <div class="section-heading detail-section-heading"><div><h3>También en tu lista</h3><p>Más títulos de muestra</p></div></div><div class="poster-grid detail-related"><button class="poster-card" data-screen-link="detail"><span class="poster-art art-3"><i></i><b>HER</b><small>UNA HISTORIA DE AMOR</small></span><span class="poster-meta"><strong>Her</strong><small>2013 · Romance</small></span></button><button class="poster-card" data-screen-link="detail"><span class="poster-art art-4"><i></i><b>PARÁSITOS</b><small>UNA FAMILIA</small></span><span class="poster-meta"><strong>Parásitos</strong><small>2019 · Drama</small></span></button></div>
+            </section>
+
+            <section class="screen screen-favorites" data-screen="favorites" hidden>
+              <div class="page-title-row"><div><p class="eyebrow app-eyebrow">TU BIBLIOTECA</p><h2>Mi lista</h2></div><span class="view-caption">8 elementos guardados</span></div>
+              <div class="continue-strip"><div class="continue-art art-2"><i></i></div><div class="continue-copy"><p class="eyebrow">SEGUIR VIENDO</p><strong>La llegada</strong><small>Quedan 42 min</small><span class="progress-track"><i></i></span></div><button class="button button-primary" data-screen-link="vod-player"><svg><use href="#i-play"/></svg> Continuar</button></div>
+              <div class="section-heading compact-heading"><div><h3>Guardado para después</h3><p>Tu selección personal</p></div><button class="filter-select">Todo el contenido <svg class="chevron"><use href="#i-chevron"/></svg></button></div>
+              <div class="poster-grid compact-grid"><button class="poster-card" data-screen-link="detail"><span class="poster-art art-1"><i></i><b>INTERSTELLAR</b><small>UNA ODISEA ESPACIAL</small></span><span class="poster-meta"><strong>Interstellar</strong><small>Película · 2014</small></span></button><button class="poster-card" data-screen-link="detail"><span class="poster-art art-6"><i></i><b>SEVERANCE</b><small>EL TRABAJO NO TERMINA</small></span><span class="poster-meta"><strong>Separación</strong><small>Serie · 2 temporadas</small></span></button><button class="poster-card" data-screen-link="detail"><span class="poster-art art-5"><i></i><b>MOONLIGHT</b><small>EN TRES ACTOS</small></span><span class="poster-meta"><strong>Moonlight</strong><small>Película · 2016</small></span></button><button class="poster-card" data-screen-link="detail"><span class="poster-art art-7"><i></i><b>THE BEAR</b><small>EVERY SECOND COUNTS</small></span><span class="poster-meta"><strong>The Bear</strong><small>Serie · 4 temporadas</small></span></button></div>
+              <div class="empty-preview"><span class="empty-icon"><svg><use href="#i-heart"/></svg></span><div><strong>Estado vacío</strong><p>Aún no has guardado títulos. Usa «Guardar en Mi lista» desde una ficha.</p></div><button class="button button-secondary" data-screen-link="movies">Explorar películas</button></div>
+            </section>
+
+            <section class="screen screen-ace" data-screen="ace" hidden>
+              <div class="page-title-row"><div><p class="eyebrow app-eyebrow">REPRODUCTORES</p><h2>Ace Stream</h2></div></div>
+              <div class="ace-intro"><span class="ace-brand-icon"><svg><use href="#i-link"/></svg></span><div><strong>Reproducción con Ace Stream</strong><p>Abre canales compatibles en la aplicación instalada en tu dispositivo.</p></div></div>
+              <div class="section-heading compact-heading"><div><h3>Canales guardados</h3><p>Disponibilidad sujeta a la aplicación Ace Stream</p></div><span class="result-total">0 guardados</span></div>
+              <div class="empty-large"><span class="empty-icon"><svg><use href="#i-link"/></svg></span><strong>No hay canales Ace Stream</strong><p>Cuando la lista incluya canales compatibles, aparecerán aquí.</p></div>
+              <form class="manual-entry" id="ace-form"><label for="ace-id">Abrir un ID de Ace Stream</label><div><input id="ace-id" type="text" maxlength="40" placeholder="ID de 40 caracteres" autocomplete="off"><button class="button button-primary" type="submit"><svg><use href="#i-play"/></svg> Abrir canal</button></div><small>Necesitas tener Ace Stream instalado para continuar.</small><p class="form-feedback" aria-live="polite"></p></form>
+            </section>
+
+            <section class="screen screen-source" data-screen="source" hidden>
+              <div class="settings-heading"><button class="back-button" data-screen-link="live"><svg><use href="#i-back"/></svg> Volver a la biblioteca</button><p class="eyebrow app-eyebrow">CONFIGURACIÓN DE FUENTE</p><h2>Tu lista, en un solo lugar.</h2><p>Conecta tu fuente privada para cargar canales, películas y series.</p></div>
+              <form class="source-form" id="source-form"><div class="form-tab"><button class="is-active" type="button">Lista M3U</button><button type="button">Xtream</button></div><label for="source-url">Dirección de la lista</label><input id="source-url" type="url" placeholder="https://servidor/lista.m3u" autocomplete="url"><p class="field-hint">También se aceptan enlaces Xtream, como get.php.</p><label class="privacy-check"><input type="checkbox" checked><span><svg><use href="#i-check"/></svg></span><span>Guardar esta fuente cifrada en tu cuenta</span></label><p class="privacy-explain"><svg><use href="#i-info"/></svg> La dirección se cifra antes de almacenarse. Nunca se muestra en la web.</p><button class="button button-primary source-submit" type="submit">Conectar fuente <svg><use href="#i-back"/></svg></button><p class="form-feedback" aria-live="polite"></p></form>
+            </section>
+
+            <section class="screen screen-login" data-screen="login" hidden>
+              <div class="login-layout"><div class="login-intro"><span class="login-logo"><svg><use href="#i-screen"/></svg></span><p class="eyebrow app-eyebrow">TU ESPACIO PERSONAL</p><h2>Todo lo que ves,<br>en su sitio.</h2><p>Entra para volver a tu lista y continuar donde lo dejaste.</p></div><form class="login-form" id="login-form"><p class="eyebrow">WALACTV</p><h3>Iniciar sesión</h3><label for="login-user">Usuario</label><input id="login-user" autocomplete="username" placeholder="Tu usuario"><label for="login-pass">Contraseña</label><div class="password-input"><input id="login-pass" type="password" autocomplete="current-password" placeholder="Tu contraseña"><button type="button" aria-label="Mostrar contraseña" class="icon-button"><svg><use href="#i-info"/></svg></button></div><div class="login-error"><svg><use href="#i-alert"/></svg> No se ha podido iniciar sesión. Revisa tus datos e inténtalo otra vez.</div><button class="button button-primary login-submit" type="submit">Entrar <svg><use href="#i-back"/></svg></button><p class="privacy-explain"><svg><use href="#i-screen"/></svg> Acceso privado · sesión cifrada</p></form></div>
+            </section>
+
+            <section class="screen screen-vod-player" data-screen="vod-player" hidden>
+              <div class="player-topline"><button class="back-button" data-screen-link="detail"><svg><use href="#i-back"/></svg> Volver a la ficha</button><span class="player-title-small">Interstellar <i></i> Película</span><button class="icon-button" aria-label="Más opciones"><svg><use href="#i-more"/></svg></button></div>
+              <div class="video-surface video-vod"><div class="video-scene scene-space"><span class="video-sample-label">VISTA DE MUESTRA · SIN VÍDEO</span><div class="video-center-play"><svg><use href="#i-play"/></svg></div><div class="video-title-overlay"><span>PELÍCULA</span><strong>Interstellar</strong></div><div class="video-controls"><div class="video-progress"><i></i><span></span></div><div class="video-control-row"><button aria-label="Pausar"><svg><use href="#i-pause"/></svg></button><span>24:18 <i>/</i> 2:49:00</span><span class="control-spacer"></span><button aria-label="Sonido"><svg><use href="#i-volume"/></svg></button><button aria-label="Pantalla completa"><svg><use href="#i-fullscreen"/></svg></button></div></div></div></div>
+              <div class="player-footer"><div><strong>Interstellar</strong><span>Continuando desde 24:18</span></div><button class="button button-secondary" data-screen-link="detail">Volver a la ficha</button></div>
+            </section>
+
+            <section class="screen screen-live-player" data-screen="live-player" hidden>
+              <div class="player-topline"><button class="back-button" data-screen-link="live"><svg><use href="#i-back"/></svg> Volver a Directo</button><span class="player-title-small"><i class="onair-dot"></i> EN DIRECTO</span><button class="icon-button" aria-label="Más opciones"><svg><use href="#i-more"/></svg></button></div>
+              <div class="video-surface video-live"><div class="video-scene scene-broadcast"><span class="video-sample-label">VISTA DE MUESTRA · SIN SEÑAL</span><div class="broadcast-mark"><svg><use href="#i-live"/></svg></div><div class="broadcast-copy"><small>CANAL DE MUESTRA</small><strong>Noticias 24</strong></div><div class="live-video-controls"><span class="onair-pill"><i></i> EN DIRECTO</span><button aria-label="Sonido"><svg><use href="#i-volume"/></svg></button><button aria-label="Pantalla completa"><svg><use href="#i-fullscreen"/></svg></button></div></div></div>
+              <div class="player-footer"><div><strong>Noticias 24</strong><span>Canal · idioma de muestra</span></div><span class="player-live-label"><i></i> En directo</span></div>
+            </section>
+
+            <section class="screen screen-kit" data-screen="kit" hidden>
+              <div class="page-title-row"><div><p class="eyebrow app-eyebrow">SISTEMA VISUAL</p><h2>Iconos y componentes</h2></div><span class="view-caption">WalacTV · propuesta 01</span></div>
+              <div class="kit-section"><div class="kit-heading"><h3>Marca y favicon</h3><p>Un símbolo de pantalla con señal, legible en pestaña y acceso directo.</p></div><div class="brand-showcase"><div class="brand-lockup"><span class="app-logo"><svg><use href="#i-screen"/></svg></span><span>Walac<span>TV</span></span></div><div class="favicon-sizes"><div><img src="./favicon.svg" width="48" height="48" alt="Favicon WalacTV a 48 píxeles"><small>48 px</small></div><div><img src="./favicon.svg" width="32" height="32" alt="Favicon WalacTV a 32 píxeles"><small>32 px</small></div><div><img src="./favicon.svg" width="16" height="16" alt="Favicon WalacTV a 16 píxeles"><small>16 px</small></div></div><a class="file-link" href="./favicon.svg" target="_blank" rel="noreferrer">Abrir SVG</a></div></div>
+              <div class="kit-section"><div class="kit-heading"><h3>Navegación</h3><p>Sección activa, contador y destino de reproducción.</p></div><div class="nav-examples"><button class="nav-item active"><svg><use href="#i-live"/></svg><span>Directo</span><i class="nav-count live-count">EN VIVO</i></button><button class="nav-item"><svg><use href="#i-film"/></svg><span>Películas</span></button><button class="nav-item"><svg><use href="#i-heart"/></svg><span>Mi lista</span><i class="nav-count">08</i></button><button class="nav-item disabled-nav" disabled><svg><use href="#i-link"/></svg><span>Ace Stream</span></button></div></div>
+              <div class="kit-section"><div class="kit-heading"><h3>Botones</h3><p>Acción principal, secundaria, icono, error y estados.</p></div><div class="button-examples"><button class="button button-primary"><svg><use href="#i-play"/></svg> Reproducir</button><button class="button button-secondary"><svg><use href="#i-heart"/></svg> Guardar en Mi lista</button><button class="button button-tertiary">Cancelar</button><button class="button button-danger"><svg><use href="#i-close"/></svg> Eliminar fuente</button><button class="button button-primary" disabled><svg><use href="#i-refresh"/></svg> Cargando…</button><button class="icon-button" aria-label="Buscar"><svg><use href="#i-search"/></svg></button><button class="icon-button" aria-label="Más opciones"><svg><use href="#i-more"/></svg></button></div></div>
+              <div class="kit-section"><div class="kit-heading"><h3>Iconografía</h3><p>Un set de 25 iconos de trazo, grosor uniforme y nombres accesibles.</p></div><div class="icon-grid"><div><svg><use href="#i-screen"/></svg><small>Televisión</small></div><div><svg><use href="#i-live"/></svg><small>Directo</small></div><div><svg><use href="#i-film"/></svg><small>Películas</small></div><div><svg><use href="#i-series"/></svg><small>Series</small></div><div><svg><use href="#i-heart"/></svg><small>Mi lista</small></div><div><svg><use href="#i-link"/></svg><small>Ace Stream</small></div><div><svg><use href="#i-search"/></svg><small>Buscar</small></div><div><svg><use href="#i-filter"/></svg><small>Filtros</small></div><div><svg><use href="#i-refresh"/></svg><small>Actualizar</small></div><div><svg><use href="#i-play"/></svg><small>Reproducir</small></div><div><svg><use href="#i-pause"/></svg><small>Pausa</small></div><div><svg><use href="#i-volume"/></svg><small>Volumen</small></div><div><svg><use href="#i-fullscreen"/></svg><small>Pantalla</small></div><div><svg><use href="#i-user"/></svg><small>Cuenta</small></div><div><svg><use href="#i-settings"/></svg><small>Ajustes</small></div><div><svg><use href="#i-exit"/></svg><small>Salir</small></div><div><svg><use href="#i-close"/></svg><small>Cerrar</small></div><div><svg><use href="#i-back"/></svg><small>Volver</small></div><div><svg><use href="#i-chevron"/></svg><small>Desplegar</small></div><div><svg><use href="#i-info"/></svg><small>Información</small></div><div><svg><use href="#i-check"/></svg><small>Correcto</small></div><div><svg><use href="#i-alert"/></svg><small>Alerta</small></div><div><svg><use href="#i-more"/></svg><small>Más opciones</small></div><div><svg><use href="#i-spark"/></svg><small>Deportes</small></div><div><svg><use href="#i-sun"/></svg><small>Idioma</small></div></div></div>
+              <div class="kit-section"><div class="kit-heading"><h3>Campo y estados</h3><p>Etiqueta persistente, ayuda, foco visible y error accionable.</p></div><div class="field-examples"><label>Buscar en tu catálogo<div class="search-field"><svg><use href="#i-search"/></svg><input placeholder="Escribe un título"><kbd>/</kbd></div></label><label>Estado de conexión<div class="state-message success-message"><svg><use href="#i-check"/></svg><span><strong>Fuente conectada</strong><small>Catálogo actualizado hace 4 min.</small></span></div></label><label>Estado de error<div class="state-message error-message"><svg><use href="#i-alert"/></svg><span><strong>No se pudo actualizar</strong><small>El catálogo anterior sigue disponible.</small></span><button class="text-button">Reintentar</button></div></label></div></div>
+              <div class="kit-section"><div class="kit-heading"><h3>Confirmación y carga</h3><p>Acción destructiva clara y reserva de espacio mientras carga.</p></div><div class="kit-extra-grid"><div class="dialog-demo"><span class="dialog-demo-icon"><svg><use href="#i-alert"/></svg></span><div><strong>Eliminar fuente</strong><p>Se eliminarán esta conexión y su catálogo guardado.</p></div><div class="dialog-actions"><button class="button button-tertiary">Cancelar</button><button class="button button-danger">Eliminar fuente</button></div></div><div class="skeleton-demo" role="status" aria-label="Cargando catálogo"><strong>Cargando catálogo</strong><span class="skeleton-line skeleton-title"></span><span class="skeleton-line"></span><span class="skeleton-line skeleton-short"></span><small>Se conserva el espacio del contenido.</small></div></div></div>
+              <div class="kit-section"><div class="kit-heading"><h3>Tipografía y color</h3><p>Escala de interfaz y roles cromáticos de esta dirección.</p></div><div class="type-color"><div><span class="type-display">Ag</span><div><strong>Interfaz de producto</strong><small>System sans · 15/24 px · títulos 32 px</small></div></div><div class="swatches"><span style="--swatch:var(--canvas)"><i></i> Fondo</span><span style="--swatch:var(--accent)"><i></i> Acción</span><span style="--swatch:var(--live)"><i></i> Directo</span><span style="--swatch:var(--success)"><i></i> Correcto</span><span style="--swatch:var(--danger)"><i></i> Error</span></div></div></div>
+            </section>
+          </div>
+          <nav class="mobile-bottom-nav" aria-label="Secciones"><button data-screen-link="live" aria-label="Directo"><svg><use href="#i-live"/></svg><span>Directo</span></button><button data-screen-link="movies" aria-label="Películas"><svg><use href="#i-film"/></svg><span>Películas</span></button><button data-screen-link="series" aria-label="Series"><svg><use href="#i-series"/></svg><span>Series</span></button><button data-screen-link="favorites" aria-label="Mi lista"><svg><use href="#i-heart"/></svg><span>Mi lista</span></button></nav>
+        </div>
+      </div>
+
+      <footer class="lab-footer"><span>WalacTV · Concepto interactivo, sin conexión a IPTV</span><span>Teclas: Tab para recorrer · 320–1440 px previstos</span></footer>
+    </main>
+    <script src="./mockups.js"></script>
+  </body>
+</html>

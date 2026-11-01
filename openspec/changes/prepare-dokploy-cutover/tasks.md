@@ -14,8 +14,8 @@ Cada tarea se limita a una sesión acotada y registra su evidencia en `docs/depl
 ## 2. Revalidación del panel después del login
 
 - [x] 2.1 Leer la configuración actual de WEB y recursos asociados; registrar dominio/puerto, repositorio/rama/Compose, Auto Deploy, commit/imagen recuperables y fuente/fecha en el inventario privado, con resumen público saneado.
-- [ ] 2.2 Completar el proyecto/servicio ya creado `WALACTV NEXT` / `WEB NEXT`: repositorio `walactv-next`, rama `main`, Compose `compose.dokploy.yml`, Auto Deploy apagado; crear DB, configurar red/secrets y luego decidir Auto Deploy. El dominio final elegido es el hostname actual de WEB; verificar destinos antes de nuevos pushes.
-- [ ] 2.3 Confirmar PostgreSQL nueva, redes reales/proxy, SSL, referencias de secretos, backup/restore y capacidad del servidor; verificar aislamiento frente a bases legacy, el acceso de los tres servicios de base y conservar `API_REPLICAS=1` antes de configurar recursos.
+- [ ] 2.2 Completar el proyecto/servicio ya creado `WALACTV NEXT` / `WEB NEXT`: repositorio `walactv-next`, rama `main`, Compose `compose.dokploy.yml`, Auto Deploy apagado; crear PostgreSQL mediante Database → PostgreSQL de Dokploy (el usuario introduce la contraseña), configurar red/secrets y luego decidir Auto Deploy. El dominio final elegido es el hostname actual de WEB; verificar destinos antes de nuevos pushes.
+- [ ] 2.3 Confirmar PostgreSQL nueva, redes reales/proxy, SSL, referencias de secretos y capacidad del servidor; verificar aislamiento frente a bases legacy, el acceso de los tres servicios de base y conservar `API_REPLICAS=1`. Por decisión del usuario, configurar y comprobar backups justo antes de importar la lista IPTV real; no cargarla antes.
 - [x] 2.4 Revalidar actividad actual de IPTV/SCRAPPER/dev y contrastar consumidores documentados, Compose, datos y recursos; completar la matriz sin inferir tráfico o responsables no observados. Todos siguen activos y no hay candidato de retirada demostrado.
 
 ## 3. Primera publicación separada

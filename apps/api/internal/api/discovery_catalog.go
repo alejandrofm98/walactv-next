@@ -663,8 +663,8 @@ func (s *privateState) dbCatalogItem(ctx context.Context, src *source, kind, ite
 	return item, true, nil
 }
 
-func (s *privateState) dbCategories(ctx context.Context, sourceID, kind string) ([]category, error) {
-	rows, err := s.cfg.DB.Query(ctx, `SELECT c.id,c.name FROM source_catalog_state s JOIN source_catalog_categories c ON c.source_id=s.source_id AND c.generation=s.active_generation WHERE s.source_id=$1 AND c.kind=$2 ORDER BY c.name,c.id`, sourceID, kind)
+func (s *privateState) dbCategories(ctx context.Context, sourceID, kind, language string) ([]category, error) {
+	rows, err := s.cfg.DB.Query(ctx, `SELECT c.id,c.name FROM source_catalog_state s JOIN source_catalog_categories c ON c.source_id=s.source_id AND c.generation=s.active_generation WHERE s.source_id=$1 AND c.kind=$2 AND ($3='' OR EXISTS (SELECT 1 FROM source_catalog_entries e WHERE e.source_id=c.source_id AND e.generation=c.generation AND e.kind=c.kind AND e.category_id=c.id AND e.language=$3)) ORDER BY c.name,c.id`, sourceID, kind, language)
 	if err != nil {
 		return nil, errSourceStore
 	}
@@ -984,6 +984,9 @@ func validLanguageID(v string) bool {
 		}
 	}
 	return true
+}
+func validCatalogLanguage(v string) bool {
+	return v == "" || v == "und" || validLanguageID(v)
 }
 func escapeLike(v string) string {
 	v = strings.ReplaceAll(v, `\`, `\\`)

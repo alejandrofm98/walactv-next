@@ -1,7 +1,8 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
+import { ContentRoutes } from '../../core/content-routes';
 
 @Component({
   standalone: true,
@@ -9,7 +10,7 @@ import { AuthService } from '../../core/auth.service';
   template: `
     <main class="login-page">
       <div class="login-grain"></div>
-      <header class="login-brand"><span class="brand-mark">w<span>·</span></span><span>walac<span>tv</span></span></header>
+      <header class="login-brand"><span class="brand-mark"><img src="/logo.png" alt="" width="36" height="19"></span><span>walac<span>tv</span></span></header>
       <section class="login-layout">
         <form class="login-card" (ngSubmit)="submit()">
           <h1>Inicia sesión</h1>
@@ -19,7 +20,7 @@ import { AuthService } from '../../core/auth.service';
           <input id="password" name="password" type="password" autocomplete="current-password" [(ngModel)]="password" required>
           @if (error()) { <div class="form-error" role="alert">{{ error() }}</div> }
           <button class="button-primary login-submit" type="submit" [disabled]="busy()">
-            {{ busy() ? 'Entrando…' : 'Entrar' }} <span aria-hidden="true">→</span>
+            {{ busy() ? 'Entrando…' : 'Entrar' }} <span aria-hidden="true"><svg><use href="/icons.svg#arrow-right"/></svg></span>
           </button>
         </form>
       </section>
@@ -32,6 +33,8 @@ import { AuthService } from '../../core/auth.service';
 export class LoginComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly contentRoutes = inject(ContentRoutes);
   username = '';
   password = '';
   readonly busy = signal(false);
@@ -43,7 +46,7 @@ export class LoginComponent {
     try {
       await this.auth.signIn(this.username.trim(), this.password);
       this.password = '';
-      await this.router.navigateByUrl('/');
+      await this.router.navigateByUrl(this.contentRoutes.returnAfterLogin(this.route.snapshot.queryParamMap.get('returnUrl')));
     } catch (err: unknown) {
       this.error.set(this.message(err, 'No se pudo iniciar sesión. Revisa tus datos e inténtalo de nuevo.'));
       this.password = '';

@@ -354,3 +354,37 @@ button{transition:background-color .18s var(--ease-out),border-color .18s var(--
 .catalog-results{display:flex!important;align-items:center!important;gap:10px!important;min-height:46px!important}
 .catalog-results .result-count{font-size:.8125rem!important;color:var(--color-text-soft)!important}
 @media(max-width:760px){.catalog-heading{margin-bottom:14px!important;padding:3px 0 16px!important}.catalog-heading h1{font-size:2rem!important}.catalog-heading-description{font-size:.875rem!important}.catalog-results{min-height:0!important}}
+
+/* Local line icons and live channel card fallbacks. */
+.brand-mark{background:var(--color-accent)!important;color:var(--color-accent-ink)!important;letter-spacing:normal!important}
+.brand-mark svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.brand-mark{background:transparent!important;border-radius:0!important;padding:0!important;color:inherit!important;flex:0 0 auto}
+.brand-mark img{display:block;width:100%;height:auto;max-height:100%;object-fit:contain}
+.nav-glyph svg,.mobile-nav svg,.logout svg,.favorite svg,.play-disc svg,.refresh-catalog svg,.search-box svg,.back-link svg,.login-submit svg,.tap-to-play svg,.url-field svg,.privacy-note svg,.notice-icon svg,.ace-card>button svg,.lime-button svg,.outline-button svg,.pagination svg,.detail-close svg,.cancel-delete-close svg,.toast button svg,.progress-play svg,.detail-art svg,.episode-main i svg,.empty-state.compact>span svg{display:block;width:1.15em;height:1.15em;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav-glyph{display:grid;place-items:center}
+.logout{transform:none!important;display:grid;place-items:center;width:40px;height:40px;border-radius:var(--radius-control);font-size:1rem!important}
+.logout:hover{background:var(--color-raised)!important;color:var(--color-accent)!important}
+.mobile-nav button>span{display:grid;place-items:center}
+.favorite svg{width:20px;height:20px}
+.play-disc svg{width:18px;height:18px}
+.refresh-catalog svg{display:inline-block;width:16px;height:16px;vertical-align:middle}
+.search-box>span{display:grid;place-items:center}.search-box svg{width:18px;height:18px}
+.url-field>span{display:grid;place-items:center}.url-field svg,.privacy-note svg,.notice-icon svg{width:18px;height:18px}
+.lime-button svg,.outline-button svg,.pagination svg,.ace-card>button svg{display:inline-block;width:17px;height:17px;vertical-align:middle}
+.detail-close svg,.cancel-delete-close svg,.toast button svg{width:18px;height:18px}
+.progress-play svg{width:18px;height:18px}
+.detail-art svg{width:42px;height:42px}
+.episode-main i svg{width:15px;height:15px}
+.empty-state.compact>span svg{width:22px;height:22px}
+.poster-live .live-logo-fallback{position:absolute;z-index:0;inset:15% 20%;width:60%;height:55%;display:grid;place-items:center;margin:0;border:1px solid var(--color-line);border-radius:18px;background:var(--color-rail)!important;color:var(--color-accent)!important;font-size:clamp(1.5rem,3vw,2.5rem);font-weight:650;letter-spacing:.04em}
+.poster:not(.poster-live):before{background:none!important}
+.poster-art-fallback{position:absolute;z-index:0;inset:0;display:grid;place-items:center;color:oklch(92% .012 82 / .46);pointer-events:none}
+.poster-art-fallback svg{display:block;width:3rem;height:3rem;fill:none;stroke:currentColor;stroke-width:1.35;stroke-linecap:round;stroke-linejoin:round}
+.vod-player-page .player-content{width:min(1480px,calc(100% - 64px))!important}
+.vod-player-page .video-shell{max-height:min(80vh,960px)!important}
+.player-page .brand-mark{width:36px!important;height:36px!important;border-radius:11px!important}
+.back-link{gap:10px!important}
+.back-link svg{width:18px;height:18px;flex:none}
+.tap-to-play svg{width:20px;height:20px}
+.login-submit svg{width:18px;height:18px;display:inline-block;vertical-align:middle}
+.brand>span:last-child span,.mobile-brand>span:last-child,.player-page .brand>span:last-child span,.login-brand>span:last-child{color:var(--color-accent)!important}

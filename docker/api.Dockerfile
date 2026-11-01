@@ -11,7 +11,14 @@ RUN apk add --no-cache ca-certificates tzdata ffmpeg \
     && addgroup -S -g 10001 walactv \
     && adduser -S -D -H -u 10001 -G walactv walactv
 RUN ffmpeg -hide_banner -encoders 2>/dev/null | grep -q 'libx264' \
-    && ffmpeg -hide_banner -encoders 2>/dev/null | grep -q ' aac '
+    && ffmpeg -hide_banner -encoders 2>/dev/null | grep -q ' aac ' \
+    && command -v ffprobe >/dev/null \
+    && ffprobe -version >/dev/null 2>&1 \
+    && ffmpeg -hide_banner -muxers 2>/dev/null | grep -q 'webvtt' \
+    && ffmpeg -hide_banner -decoders 2>/dev/null | grep -q ' subrip ' \
+    && ffmpeg -hide_banner -decoders 2>/dev/null | grep -q ' ass ' \
+    && ffmpeg -hide_banner -decoders 2>/dev/null | grep -q ' mov_text ' \
+    && ffmpeg -hide_banner -decoders 2>/dev/null | grep -q ' webvtt '
 WORKDIR /app
 RUN mkdir -p /var/lib/walactv-vod && chown walactv:walactv /var/lib/walactv-vod && chmod 0700 /var/lib/walactv-vod
 COPY --from=build /out/walactv /usr/local/bin/walactv

@@ -22,6 +22,9 @@ Cookie `walactv_session`, HttpOnly, SameSite=Strict, Path=/; Secure en HTTPS/pro
 | POST `/playbacks` | `{sourceId,kind,itemId,seriesId?}` | 201 `Playback` |
 | POST `/playbacks/{id}/heartbeat` | Cookie+CSRF | 204 |
 | DELETE `/playbacks/{id}` | Cookie+CSRF | 204, cierre upstream confirmado |
+| POST `/playbacks/{id}/tracks` | Cookie+CSRF, `{}` | 200 inventario efímero saneado; solo archivo propio con conversión habilitada |
+| POST `/playbacks/{id}/transcode` | Cookie+CSRF, `{offsetSeconds,trackRevision?,audioTrackId?,subtitleTrackId?}` | 200 vista de conversión; campos de pista opcionales y validados contra el inventario vigente |
+| GET `/playbacks/{id}/transcode/{generation}/subtitles.vtt?at=...` | Cookie | Ventana WebVTT temporal y saneada de la generación propia; `no-store` |
 | GET/HEAD `/media/{playback}/{asset}` | Cookie | HLS/archivo autorizado, HEAD/Range/206/416 |
 | GET `/favorites` | Cookie | 200 `{favorites:[Favorite]}` |
 | POST `/favorites` | `{contentKey,title,kind}` | 201 `Favorite`, idempotente por usuario/contentKey |
@@ -38,6 +41,8 @@ Además `/healthz` público puede ser alias operativo para Compose. Métodos des
 - `Source = {id,label,accountKey,expiresAt,saved:true}`. `accountKey` es identidad HMAC estable sobre origen+cuenta canónica sin contraseña, con `PROVIDER_IDENTITY_KEY` persistente. ID fuente es persistente y propio del usuario; expiresAt describe solo la caché RAM, no caducidad de la fuente guardada; UI nunca necesita datos privados proveedor.
 - `Item = {id,title,kind,containerExtension?,contentKey?}`. `kind` catálogo: `live|movie|series`; IDs únicamente del catálogo servidor. `Episode = {id,title,season,episode,containerExtension,contentKey?}` con números season/episode.
 - `Playback = {id,url,format,title,contentKey,expiresAt}`. `url` relativa opaca bajo `/api/v1/media/`; `format=hls|file`. Entrada kind playback: `live|movie|episode`; para episodio se aporta seriesId. Extensión/URL proveedor proceden de catálogo validado/cacheado en servidor, no del cliente.
+- El inventario de pistas de archivo es efímero y explícito: devuelve IDs opacos, tipo y etiquetas saneadas, nunca URL, ruta ni tags arbitrarios. La revisión e IDs solo valen para ese playback. La inspección se desactiva junto con `VOD_TRANSCODING_ENABLED`; HLS y formatos nativos exponen las capacidades propias del motor.
+- `POST /playbacks/{id}/transcode` mantiene `{offsetSeconds}` para clientes anteriores. Los IDs opcionales de pista se resuelven en servidor contra la revisión vigente; el cliente no puede enviar mapas ni índices FFmpeg. Solo audio y subtítulos textuales reconocidos son seleccionables.
 - `Favorite = {id,contentKey,title,kind}`. `Progress = {contentKey,title,kind,positionSeconds,durationSeconds,updatedAt}`. kind biblioteca: `live|movie|episode`. Posición/duración son segundos finitos no negativos; no mezclar unidades. `contentKey` estable namespaced por cuenta+tipo+ID y usuario en almacenamiento; backend valida que pertenece al catálogo accesible. No usar ID fuente temporal como identidad persistente.
 
 ## Reproducción

@@ -11,6 +11,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -126,6 +127,7 @@ func (a *API) routes() {
 	a.mux.Handle("POST /api/v1/sources/{id}/catalog/refresh", a.auth(a.csrf(http.HandlerFunc(a.refreshCatalog))))
 	a.mux.Handle("GET /api/v1/sources/{id}/images/{kind}/{itemId}", a.auth(http.HandlerFunc(a.getCatalogImage)))
 	a.mux.Handle("GET /api/v1/sources/{id}/items", a.auth(http.HandlerFunc(a.getItems)))
+	a.mux.Handle("GET /api/v1/sources/{id}/items/{kind}/{itemId}", a.auth(http.HandlerFunc(a.getCatalogItem)))
 	a.mux.Handle("GET /api/v1/sources/{id}/series/{seriesId}/episodes", a.auth(http.HandlerFunc(a.getEpisodes)))
 	a.mux.Handle("GET /api/v1/sources/{id}/items/{kind}/{itemId}/metadata", a.auth(http.HandlerFunc(a.getOnDemandMetadata)))
 	a.mux.Handle("GET /api/v1/sources/{id}/items/series/{itemId}/seasons/{season}/metadata", a.auth(http.HandlerFunc(a.getOnDemandSeasonMetadata)))
@@ -135,8 +137,10 @@ func (a *API) routes() {
 	a.mux.Handle("POST /api/v1/playbacks/{id}/heartbeat", a.auth(a.csrf(http.HandlerFunc(a.heartbeatPlayback))))
 	a.mux.Handle("DELETE /api/v1/playbacks/{id}", a.auth(a.csrf(http.HandlerFunc(a.deletePlayback))))
 	a.mux.Handle("POST /api/v1/playbacks/{id}/transcode", a.auth(a.csrf(http.HandlerFunc(a.startVODTranscode))))
+	a.mux.Handle("POST /api/v1/playbacks/{id}/tracks", a.auth(a.csrf(http.HandlerFunc(a.inspectVODTracks))))
 	a.mux.Handle("DELETE /api/v1/playbacks/{id}/transcode", a.auth(a.csrf(http.HandlerFunc(a.cancelVODTranscode))))
 	a.mux.Handle("GET /api/v1/playbacks/{id}/transcode/{generation}/{asset}", a.auth(http.HandlerFunc(a.serveVODAsset)))
+	a.mux.Handle("GET /api/v1/playbacks/{id}/transcode/{generation}/subtitles.vtt", a.auth(http.HandlerFunc(a.serveVODSubtitles)))
 	a.mux.Handle("GET /api/v1/media/{playback}/{asset}", a.auth(http.HandlerFunc(a.proxyMedia)))
 	a.mux.Handle("HEAD /api/v1/media/{playback}/{asset}", a.auth(http.HandlerFunc(a.proxyMedia)))
 }
@@ -274,7 +278,27 @@ func (a *API) csrf(next http.Handler) http.Handler {
 }
 
 func (a *API) validOrigin(r *http.Request) bool {
-	return r.Header.Get("Origin") != "" && r.Header.Get("Origin") == a.cfg.Origin
+	origin := r.Header.Get("Origin")
+	if origin == "" {
+		return false
+	}
+	if origin == a.cfg.Origin {
+		return true
+	}
+
+	configured, err := url.Parse(a.cfg.Origin)
+	if err != nil {
+		return false
+	}
+	request, err := url.Parse(origin)
+	if err != nil || configured.Scheme != "http" || request.Scheme != configured.Scheme || configured.Port() != request.Port() {
+		return false
+	}
+	return loopbackAlias(configured.Hostname(), request.Hostname())
+}
+
+func loopbackAlias(first, second string) bool {
+	return (first == "127.0.0.1" && second == "localhost") || (first == "localhost" && second == "127.0.0.1")
 }
 
 func requestSession(r *http.Request) session {

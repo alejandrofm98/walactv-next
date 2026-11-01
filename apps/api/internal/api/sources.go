@@ -91,6 +91,8 @@ type playback struct {
 	VOD                  *vodJob
 	MediaCtx             context.Context
 	MediaCancel          context.CancelFunc
+	Tracks               *vodTrackInventory
+	RootValidator        string
 }
 
 // PlaybackDiagnostic contains only a coarse, safe-to-return transport cause.
@@ -351,11 +353,12 @@ func (a *API) getCategories(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		typ := r.URL.Query().Get("type")
-		if !validCatalogType(typ) {
+		language := r.URL.Query().Get("language")
+		if !validCatalogType(typ) || !validCatalogLanguage(language) {
 			writeError(w, 400, "INVALID_INPUT", "Invalid catalog type")
 			return
 		}
-		rows, err := a.private.dbCategories(r.Context(), src.ID, typ)
+		rows, err := a.private.dbCategories(r.Context(), src.ID, typ, language)
 		if err != nil {
 			writeError(w, 503, "SOURCE_STORE_UNAVAILABLE", "Could not load catalog categories")
 			return
@@ -378,7 +381,8 @@ func (a *API) getCategories(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	typ := r.URL.Query().Get("type")
-	if !validCatalogType(typ) {
+	language := r.URL.Query().Get("language")
+	if !validCatalogType(typ) || !validCatalogLanguage(language) {
 		writeError(w, 400, "INVALID_INPUT", "Invalid catalog type")
 		return
 	}
@@ -464,6 +468,44 @@ func (a *API) getItems(w http.ResponseWriter, r *http.Request) {
 		end = len(filtered)
 	}
 	writeJSON(w, 200, map[string]any{"items": filtered[start:end], "total": len(filtered), "page": page, "pageSize": pageSize})
+}
+
+// getCatalogItem resolves a single item from the authenticated source's active
+// catalog generation. It deliberately does not search titles or provider URLs.
+func (a *API) getCatalogItem(w http.ResponseWriter, r *http.Request) {
+	src, ok := a.catalogSource(w, r)
+	if !ok {
+		return
+	}
+	kind, itemID := r.PathValue("kind"), r.PathValue("itemId")
+	if !validCatalogType(kind) || !numericID(itemID) {
+		writeError(w, http.StatusBadRequest, "INVALID_INPUT", "Invalid catalog item")
+		return
+	}
+	if a.cfg.DB != nil {
+		generation, err := a.private.activeGeneration(r.Context(), src.ID)
+		if err != nil {
+			writeError(w, http.StatusServiceUnavailable, "SOURCE_STORE_UNAVAILABLE", "Could not load catalog item")
+			return
+		}
+		if generation == 0 {
+			writeError(w, http.StatusServiceUnavailable, "CATALOG_NOT_READY", "Catalog is being prepared")
+			return
+		}
+		item, found, err := a.private.dbCatalogItem(r.Context(), src, kind, itemID)
+		if err != nil {
+			writeError(w, http.StatusServiceUnavailable, "SOURCE_STORE_UNAVAILABLE", "Could not load catalog item")
+			return
+		}
+		if !found {
+			writeError(w, http.StatusNotFound, "NOT_FOUND", "Catalog item not found")
+			return
+		}
+		writeJSON(w, http.StatusOK, item)
+		return
+	}
+
+	writeError(w, http.StatusServiceUnavailable, "CATALOG_LOOKUP_UNAVAILABLE", "Catalog item lookup requires the source store")
 }
 
 func (a *API) getEpisodes(w http.ResponseWriter, r *http.Request) {

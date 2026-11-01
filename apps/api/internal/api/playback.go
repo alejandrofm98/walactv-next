@@ -405,6 +405,17 @@ func (a *API) proxyMedia(w http.ResponseWriter, r *http.Request) {
 		writeError(w, 502, "UPSTREAM_ERROR", "Provider request failed")
 		return
 	}
+	if assetID == p.RootAsset {
+		version := mediaResourceVersion(resp.Header)
+		a.private.mu.Lock()
+		if a.private.playbacks[id] == p && !p.Closing {
+			p.RootValidator = version
+			if p.Tracks != nil && version != "" && version != p.Tracks.assetVersion {
+				p.Tracks = nil
+			}
+		}
+		a.private.mu.Unlock()
+	}
 	copyMediaHeaders(w.Header(), resp.Header)
 	if w.Header().Get("Content-Type") == "" {
 		w.Header().Set("Content-Type", a.mediaContentType(upstream, ""))
