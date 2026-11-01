@@ -10,7 +10,7 @@ Requisitos: Docker Engine con Compose v2 y OpenSSL.
 ./scripts/setup-local.sh
 ```
 
-El script crea `.env` con permisos privados, genera los secretos locales y conserva cualquier `.env` que ya exista. Abre el archivo localmente para consultar la contraseña del usuario inicial `admin` y configura `IPTV_ALLOWED_HOSTS` con el dominio permitido del proveedor antes de conectarlo. No compartas ni pegues el contenido completo del archivo.
+El script crea `.env` con permisos privados, genera los secretos locales y conserva cualquier `.env` que ya exista. Abre el archivo localmente para consultar la contraseña del usuario inicial `admin`. `IPTV_ALLOWED_HOSTS` es opcional: vacío permite proveedores Xtream con direcciones públicas; una lista separada por comas restringe los hosts. No compartas ni pegues el contenido completo del archivo.
 
 ```sh
 docker compose -f compose.yml -f compose.local.yml up --build -d
@@ -37,7 +37,7 @@ Para Dokploy usa `compose.dokploy.yml`, que conecta la aplicación a la red exte
 - `apps/web`: Angular standalone con rutas independientes y HLS descargado al reproducir.
 - La lista privada debe pertenecer a un proveedor compatible con Xtream (`get.php`). Una M3U arbitraria sin API Xtream no está implementada.
 - La fuente privada se guarda cifrada en PostgreSQL y se recupera automáticamente al iniciar sesión o reiniciar. Cerrar sesión conserva la fuente; «Eliminar fuente guardada» la borra junto con su catálogo. Favoritos y progreso se conservan.
-- Autoriza el dominio de la fuente IPTV en `IPTV_ALLOWED_HOSTS`. Durante una reproducción autorizada, el proxy sigue redirecciones y referencias HLS hacia destinos públicos sin inscribir cada servidor; valida cada conexión y bloquea redes privadas y puertos no permitidos. El proveedor puede dirigir medios a cualquier destino público permitido por estas reglas.
+- `IPTV_ALLOWED_HOSTS` puede quedar vacío para permitir cualquier proveedor Xtream con direcciones públicas; una lista separada por comas restringe los hosts de alta y control. Alta y control admiten HTTP:80 y HTTPS:443. Durante una reproducción autorizada, el proxy sigue redirecciones y referencias HLS hacia destinos públicos sin inscribir cada servidor; valida cada conexión y bloquea redes privadas y puertos no permitidos. El proveedor puede dirigir medios a cualquier destino público permitido por estas reglas.
 - HLS, MP4 y MKV se entregan en su formato original. La compatibilidad depende también del códec y del navegador. No se incluye transcodificación.
 - Ace Stream abre la aplicación instalada en Windows/Linux o Android desde una pulsación. El navegador puede pedir confirmación; iPhone/iPad no ejecutan ese motor local.
 - Una réplica de API: los leases y streams activos siguen en memoria. Redis/coordinación compartida serían necesarios antes de escalarlos. No se incluye Torrentio ni migración de usuarios anteriores.

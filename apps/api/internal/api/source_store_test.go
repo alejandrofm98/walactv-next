@@ -256,7 +256,9 @@ func TestLocalPostgresPrivateSourcePersistenceAndWrongKey(t *testing.T) {
 		t.Fatal("catalog fetch restored PostgreSQL data after source deletion")
 	}
 
-	restarted := New(Config{DB: db, Origin: "http://127.0.0.1:8081", SessionSecret: []byte(strings.Repeat("s", 32)), IdentityKey: []byte(strings.Repeat("k", 32)), EncryptionKey: key, AllowedHosts: []string{"provider.example"}})
+	// An omitted host list must still restore a previously encrypted public
+	// provider without changing its identity or persisted secret.
+	restarted := New(Config{DB: db, Origin: "http://127.0.0.1:8081", SessionSecret: []byte(strings.Repeat("s", 32)), IdentityKey: []byte(strings.Repeat("k", 32)), EncryptionKey: key})
 	loaded, err := restarted.private.loadSources(ctx, userID, time.Now().Add(time.Hour))
 	if err != nil || len(loaded) != 1 || loaded[0].ID != sourceID || loaded[0].Password != passwordValue {
 		t.Fatal("source did not rehydrate after API restart")
@@ -271,6 +273,14 @@ func TestLocalPostgresPrivateSourcePersistenceAndWrongKey(t *testing.T) {
 	loadedCatalog, ok, err := restarted.private.loadCatalog(ctx, loaded[0], "movie:7")
 	if err != nil || !ok || len(loadedCatalog.items["movie:7"]) != 1 || loadedCatalog.items["movie:7"][0].URL != "" {
 		t.Fatal("sanitized catalog did not rehydrate with playback metadata")
+	}
+	restricted := New(Config{DB: db, Origin: "http://127.0.0.1:8081", SessionSecret: []byte(strings.Repeat("s", 32)), IdentityKey: []byte(strings.Repeat("k", 32)), EncryptionKey: key, AllowedHosts: []string{"different-provider.example"}})
+	if _, err := restricted.private.loadSource(ctx, userID, sourceID, time.Now().Add(time.Hour)); err == nil {
+		t.Fatal("explicit host restriction restored a source from an excluded provider")
+	}
+	var persistedCount int
+	if err := db.QueryRow(ctx, "SELECT count(*) FROM sources WHERE id=$1 AND user_id=$2", sourceID, userID).Scan(&persistedCount); err != nil || persistedCount != 1 {
+		t.Fatal("excluding a restored source deleted its encrypted persistence")
 	}
 
 	wrongKey := New(Config{DB: db, Origin: "http://127.0.0.1:8081", SessionSecret: []byte(strings.Repeat("s", 32)), IdentityKey: []byte(strings.Repeat("k", 32)), EncryptionKey: []byte(strings.Repeat("x", 32)), AllowedHosts: []string{"provider.example"}})

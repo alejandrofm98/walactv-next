@@ -83,7 +83,7 @@ func TestParsePlaylistURLRejectsUnsafeAndNonXtreamURLs(t *testing.T) {
 }
 
 func TestPublicIPRejectsSpecialAddressRanges(t *testing.T) {
-	for _, raw := range []string{"127.0.0.1", "10.10.1.4", "100.64.0.1", "169.254.169.254", "192.0.2.1", "198.18.0.1", "::1", "fc00::1", "fe80::1", "2001:db8::1"} {
+	for _, raw := range []string{"127.0.0.1", "10.10.1.4", "100.64.0.1", "169.254.169.254", "192.0.2.1", "198.18.0.1", "203.0.113.8", "::1", "::ffff:127.0.0.1", "fc00::1", "fe80::1", "2001:db8::1", "3fff::1"} {
 		ip := netip.MustParseAddr(raw)
 		if publicIP(ip) {
 			t.Errorf("treated special IP %s as public", raw)
@@ -93,6 +93,28 @@ func TestPublicIPRejectsSpecialAddressRanges(t *testing.T) {
 		if !publicIP(netip.MustParseAddr(raw)) {
 			t.Errorf("rejected public IP %s", raw)
 		}
+	}
+}
+
+func TestAllowedHostDefaultsToAnyNonEmptyHostAndOptionalListRestricts(t *testing.T) {
+	for _, hosts := range [][]string{nil, {}, {"", "  ", "\t"}} {
+		s := newPrivateState(Config{AllowedHosts: hosts})
+		for _, host := range []string{"provider.example", "sub.provider.example", "another-provider.example"} {
+			if !s.allowedHost(host) {
+				t.Errorf("empty host list rejected %q", host)
+			}
+		}
+		if s.allowedHost("") {
+			t.Fatal("empty hostname was accepted")
+		}
+	}
+
+	s := newPrivateState(Config{AllowedHosts: []string{" provider.example. "}})
+	if !s.allowedHost("PROVIDER.EXAMPLE") || !s.allowedHost("provider.example.") {
+		t.Fatal("configured hostname was not normalized")
+	}
+	if s.allowedHost("another-provider.example") {
+		t.Fatal("non-empty host list did not restrict providers")
 	}
 }
 
@@ -155,10 +177,21 @@ func TestProviderRedirectPoliciesKeepSchemeAndHostPinned(t *testing.T) {
 	a.private.cfg.AllowedHosts = append(a.private.cfg.AllowedHosts, "cdn.example")
 	first, _ := http.NewRequest(http.MethodGet, "https://provider.example/player_api.php", nil)
 	makeReq := func(raw string) *http.Request { req, _ := http.NewRequest(http.MethodGet, raw, nil); return req }
-	for _, target := range []string{"https://evil.example/steal", "http://provider.example/downgrade", "file:///etc/passwd"} {
+	for _, target := range []string{"https://evil.example/steal", "https://provider.example:8443/port-change", "http://provider.example/downgrade", "file:///etc/passwd"} {
 		if err := a.private.controlCheckRedirect(makeReq(target), []*http.Request{first}); err == nil {
 			t.Errorf("control client accepted redirect to %s", target)
 		}
+	}
+	open := newPrivateState(Config{})
+	if err := open.controlCheckRedirect(makeReq("https://evil.example/steal"), []*http.Request{first}); err == nil {
+		t.Fatal("empty allowlist allowed a cross-origin control redirect")
+	}
+	chain := make([]*http.Request, 4)
+	for i := range chain {
+		chain[i] = first
+	}
+	if err := open.controlCheckRedirect(makeReq("https://provider.example/next"), chain); err == nil {
+		t.Fatal("control client accepted more than three redirects")
 	}
 	if err := a.private.controlCheckRedirect(makeReq("https://provider.example/next"), []*http.Request{first}); err != nil {
 		t.Fatalf("same-origin redirect rejected: %v", err)
@@ -495,6 +528,94 @@ func TestDialRejectsPrivateAddressBeforeConnecting(t *testing.T) {
 			t.Errorf("private address %s was not rejected before connect: %v", address, err)
 		}
 	}
+
+	// An empty optional host list expands hostname eligibility but does not
+	// relax the public-address or provider-port checks.
+	s = newPrivateState(Config{})
+	if _, err := s.dialPublic(context.Background(), "tcp", "127.0.0.1:443"); err == nil || !strings.Contains(err.Error(), "non-public") {
+		t.Fatalf("empty host list allowed a private provider address: %v", err)
+	}
+	if _, err := s.dialPublic(context.Background(), "tcp", "provider.example:8443"); err == nil || !strings.Contains(err.Error(), "port is not allowed") {
+		t.Fatalf("empty host list relaxed provider port validation: %v", err)
+	}
+}
+
+func TestDialSelectedIPRejectsEmptyAndMixedDNSAndPinsPublicAnswer(t *testing.T) {
+	dialed := ""
+	dial := func(_ context.Context, network, address string) (net.Conn, error) {
+		dialed = network + " " + address
+		return nil, errors.New("fixture stopped before network")
+	}
+	for _, ips := range [][]netip.Addr{
+		nil,
+		{netip.MustParseAddr("203.0.113.8")}, // documentation range
+		{netip.MustParseAddr("1.1.1.1"), netip.MustParseAddr("127.0.0.1")},
+	} {
+		dialed = ""
+		if _, err := dialSelectedIP(context.Background(), "tcp", "provider.example", "443", ips, publicIP, dial); err == nil || dialed != "" {
+			t.Errorf("invalid DNS answer reached dial (ips=%v, err=%v, dialed=%q)", ips, err, dialed)
+		}
+	}
+	dialed = ""
+	_, err := dialSelectedIP(context.Background(), "tcp", "provider.example", "443", []netip.Addr{netip.MustParseAddr("1.1.1.1"), netip.MustParseAddr("1.0.0.1")}, publicIP, dial)
+	if err == nil || dialed != "tcp 1.1.1.1:443" {
+		t.Fatalf("dial did not use the first validated DNS answer: err=%v dialed=%q", err, dialed)
+	}
+}
+
+func TestControlDialValidatesResolvedAddressesBeforeConnecting(t *testing.T) {
+	lookup := func(_ context.Context, host string) ([]netip.Addr, error) {
+		if host != "provider.example" {
+			t.Fatalf("lookup received unexpected host %q", host)
+		}
+		return nil, nil
+	}
+	dialCalls := 0
+	dial := func(context.Context, string, string) (net.Conn, error) {
+		dialCalls++
+		return nil, errors.New("fixture dial")
+	}
+	if _, err := dialPublicHostWith(context.Background(), "tcp", "provider.example", "443", lookup, dial); err == nil || !strings.Contains(err.Error(), "no public address") {
+		t.Fatalf("empty DNS answer was accepted: %v", err)
+	}
+	if dialCalls != 0 {
+		t.Fatal("empty DNS answer reached dial")
+	}
+	lookup = func(context.Context, string) ([]netip.Addr, error) {
+		return []netip.Addr{netip.MustParseAddr("1.1.1.1"), netip.MustParseAddr("::ffff:127.0.0.1")}, nil
+	}
+	if _, err := dialPublicHostWith(context.Background(), "tcp", "provider.example", "443", lookup, dial); err == nil || !strings.Contains(err.Error(), "non-public") {
+		t.Fatalf("mixed public/private DNS answer was accepted: %v", err)
+	}
+	if dialCalls != 0 {
+		t.Fatal("mixed DNS answer reached dial")
+	}
+	lookup = func(context.Context, string) ([]netip.Addr, error) {
+		return []netip.Addr{netip.MustParseAddr("3fff::1")}, nil
+	}
+	if _, err := dialPublicHostWith(context.Background(), "tcp", "provider.example", "443", lookup, dial); err == nil || !strings.Contains(err.Error(), "non-public") {
+		t.Fatalf("IPv6 documentation DNS answer was accepted: %v", err)
+	}
+	if dialCalls != 0 {
+		t.Fatal("IPv6 documentation DNS answer reached dial")
+	}
+	lookup = func(context.Context, string) ([]netip.Addr, error) {
+		return []netip.Addr{netip.MustParseAddr("1.1.1.1"), netip.MustParseAddr("1.0.0.1")}, nil
+	}
+	if _, err := dialPublicHostWith(context.Background(), "tcp", "provider.example", "443", lookup, dial); err == nil {
+		t.Fatal("fixture dial unexpectedly succeeded")
+	}
+	if dialCalls != 1 {
+		t.Fatalf("valid DNS answer did not dial exactly once: %d", dialCalls)
+	}
+}
+
+func TestControlTransportDoesNotUseProxy(t *testing.T) {
+	s := newPrivateState(Config{})
+	transport, ok := s.control.Transport.(*http.Transport)
+	if !ok || transport.Proxy != nil {
+		t.Fatal("provider control transport can use an environment proxy")
+	}
 }
 
 func TestMediaDialRejectsPrivateAddressWithoutAllowlistingDynamicHost(t *testing.T) {
@@ -767,6 +888,45 @@ func TestCreateSourceAndItemsUseFixtureAndDoNotExposeCredentials(t *testing.T) {
 	}
 }
 
+func TestCreateSourceAllowsAnyProviderWhenHostListIsEmpty(t *testing.T) {
+	var calls int
+	client := &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
+		calls++
+		if r.URL.Host != "unlisted-provider.example" {
+			t.Fatalf("unexpected provider host %q", r.URL.Host)
+		}
+		if r.Header.Get("Cookie") != "" || r.Header.Get("Authorization") != "" {
+			t.Fatalf("private session headers were forwarded to provider: %#v", r.Header)
+		}
+		return jsonResponse(http.StatusOK, `{"user_info":{"auth":1,"status":"Active","max_connections":"1"}}`), nil
+	})}
+	a := testAPI(client)
+	a.private.cfg.AllowedHosts = []string{"", "  "}
+	r := sessionRequest(http.MethodPost, "/api/v1/sources", "member-a", strings.NewReader(`{"playlistUrl":"https://unlisted-provider.example/get.php?username=alice&password=secret"}`))
+	r.Header.Set("Cookie", "session=private")
+	r.Header.Set("Authorization", "Bearer private")
+	w := httptest.NewRecorder()
+	a.createSource(w, r)
+	if w.Code != http.StatusCreated || calls != 1 {
+		t.Fatalf("empty host list did not allow a public provider source: status=%d calls=%d body=%s", w.Code, calls, w.Body.String())
+	}
+}
+
+func TestCreateSourceStillRestrictsHostsWhenListIsConfigured(t *testing.T) {
+	var calls int
+	client := &http.Client{Transport: roundTripFunc(func(*http.Request) (*http.Response, error) {
+		calls++
+		return jsonResponse(http.StatusOK, `{"user_info":{"auth":1,"status":"Active"}}`), nil
+	})}
+	a := testAPI(client)
+	r := sessionRequest(http.MethodPost, "/api/v1/sources", "member-a", strings.NewReader(`{"playlistUrl":"https://unlisted-provider.example/get.php?username=alice&password=secret"}`))
+	w := httptest.NewRecorder()
+	a.createSource(w, r)
+	if w.Code != http.StatusBadRequest || calls != 0 {
+		t.Fatalf("configured host list did not restrict provider source: status=%d calls=%d body=%s", w.Code, calls, w.Body.String())
+	}
+}
+
 func TestCreateSourceRejectsInactiveAccountsAndPreservesExistingSource(t *testing.T) {
 	cases := []struct {
 		name string
@@ -864,6 +1024,30 @@ func TestPlaybackRefreshesExpiredCatalogBeforeUsingMetadata(t *testing.T) {
 	var view PlaybackView
 	if w.Code != 201 || json.Unmarshal(w.Body.Bytes(), &view) != nil || view.Title != "Film refreshed" || view.Format != "file" {
 		t.Fatalf("playback did not use refreshed metadata: %d %s", w.Code, w.Body.String())
+	}
+}
+
+func TestPlaybackRootUsesOptionalHostRestriction(t *testing.T) {
+	newApp := func(hosts []string) *API {
+		a := testAPI(&http.Client{Transport: roundTripFunc(func(*http.Request) (*http.Response, error) { return nil, nil })})
+		a.private.cfg.AllowedHosts = hosts
+		src := &source{ID: "source-open", UserID: "member", Fingerprint: "account", Base: "https://unlisted-provider.example", Username: "u", Password: "p", MaxConnections: 1, ExpiresAt: time.Now().Add(time.Hour), VerifiedAt: time.Now()}
+		a.private.sources[src.ID] = src
+		item := CatalogItem{ID: "25", Title: "Film", Kind: "movie", ContainerExtension: "mp4", CategoryID: "7", ContentKey: strings.Repeat("a", 64)}
+		a.private.catalogs[src.ID+":movie:7"] = catalogData{expires: time.Now().Add(time.Minute), items: map[string][]CatalogItem{"movie:7": {item}}}
+		a.private.authorized[src.ID] = map[string]CatalogItem{item.ContentKey: item}
+		return a
+	}
+	body := `{"sourceId":"source-open","kind":"movie","itemId":"25"}`
+	open := httptest.NewRecorder()
+	newApp(nil).createPlayback(open, sessionRequest(http.MethodPost, "/api/v1/playbacks", "member", strings.NewReader(body)))
+	if open.Code != http.StatusCreated {
+		t.Fatalf("empty host list rejected a source's playback root: %d %s", open.Code, open.Body.String())
+	}
+	restricted := httptest.NewRecorder()
+	newApp([]string{"provider.example"}).createPlayback(restricted, sessionRequest(http.MethodPost, "/api/v1/playbacks", "member", strings.NewReader(body)))
+	if restricted.Code != http.StatusBadGateway {
+		t.Fatalf("explicit host restriction did not reject playback root: %d %s", restricted.Code, restricted.Body.String())
 	}
 }
 

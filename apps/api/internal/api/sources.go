@@ -949,15 +949,26 @@ func (s *privateState) dialMediaPublic(ctx context.Context, network, address str
 }
 
 func (s *privateState) dialPublicHost(ctx context.Context, network, host, port string) (net.Conn, error) {
+	dialer := &net.Dialer{Timeout: 5 * time.Second, KeepAlive: 30 * time.Second}
+	return dialPublicHostWith(ctx, network, host, port, resolvePublicHost, dialer.DialContext)
+}
+
+func dialPublicHostWith(ctx context.Context, network, host, port string, lookup func(context.Context, string) ([]netip.Addr, error), dial func(context.Context, string, string) (net.Conn, error)) (net.Conn, error) {
 	if port != "80" && port != "443" {
 		return nil, errors.New("provider port is not allowed")
 	}
-	ips, err := net.DefaultResolver.LookupNetIP(ctx, "ip", host)
+	ips, err := lookup(ctx, host)
 	if err != nil {
 		return nil, err
 	}
-	dialer := &net.Dialer{Timeout: 5 * time.Second, KeepAlive: 30 * time.Second}
-	return dialSelectedIP(ctx, network, host, port, ips, publicIP, dialer.DialContext)
+	return dialSelectedIP(ctx, network, host, port, ips, publicIP, dial)
+}
+
+func resolvePublicHost(ctx context.Context, host string) ([]netip.Addr, error) {
+	if ip, err := netip.ParseAddr(host); err == nil {
+		return []netip.Addr{ip}, nil
+	}
+	return net.DefaultResolver.LookupNetIP(ctx, "ip", host)
 }
 
 func (s *privateState) dialMediaPublicHost(ctx context.Context, network, host, port string) (net.Conn, error) {
@@ -1022,12 +1033,21 @@ func dialSelectedIP(ctx context.Context, network, host, port string, ips []netip
 
 func (s *privateState) allowedHost(host string) bool {
 	host = strings.ToLower(strings.TrimSuffix(strings.TrimSpace(host), "."))
+	if host == "" {
+		return false
+	}
+	configured := false
 	for _, allowed := range s.cfg.AllowedHosts {
-		if strings.EqualFold(host, strings.TrimSpace(allowed)) {
+		allowed = strings.ToLower(strings.TrimSuffix(strings.TrimSpace(allowed), "."))
+		if allowed == "" {
+			continue
+		}
+		configured = true
+		if host == allowed {
 			return true
 		}
 	}
-	return false
+	return !configured
 }
 func publicIP(ip netip.Addr) bool {
 	ip = ip.Unmap()
@@ -1038,7 +1058,7 @@ func publicIP(ip netip.Addr) bool {
 		if !netip.MustParsePrefix("2000::/3").Contains(ip) {
 			return false
 		}
-		for _, raw := range []string{"2001:db8::/32", "2001::/23", "2002::/16"} {
+		for _, raw := range []string{"2001:db8::/32", "2001::/23", "2002::/16", "3fff::/20"} {
 			if netip.MustParsePrefix(raw).Contains(ip) {
 				return false
 			}
