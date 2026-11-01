@@ -62,7 +62,7 @@ const SECTIONS: { id: LibrarySection; label: string; glyph: string; group: strin
               <h1>Añade tu lista</h1>
               <p>Admite listas M3U y enlaces Xtream, como get.php.</p>
               <label for="playlist">URL M3U o Xtream</label>
-              <div class="url-field"><span aria-hidden="true">↗</span><input id="playlist" type="password" autocomplete="off" spellcheck="false" [(ngModel)]="playlistUrl" name="playlist" required></div>
+              <div class="url-field"><span aria-hidden="true">↗</span><input id="playlist" type="text" inputmode="url" autocomplete="off" spellcheck="false" [(ngModel)]="playlistUrl" name="playlist" required></div>
               <div class="privacy-note"><span aria-hidden="true">◈</span><span>Se guarda cifrada y no se vuelve a mostrar.</span></div>
               @if (error()) { <div class="inline-error" role="alert">{{ error() }}</div> }
               <button class="lime-button connect-button" [disabled]="busy() || !playlistUrl.trim()">{{ busy() ? 'Comprobando lista…' : 'Conectar lista' }} <span>→</span></button>
