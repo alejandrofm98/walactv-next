@@ -1,7 +1,7 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { AceChannel, CatalogKind, CatalogLanguage, CatalogPage, CatalogStatus, Category, Episode, Favorite, MetadataResponse, Playback, PlaybackDiagnostic, PlaybackKind, Progress, Session, Source, TranscodePlayback, VodTracks } from '../models';
+import { AceChannel, CatalogKind, CatalogLanguage, CatalogPage, CatalogStatus, Category, DiscoveryPage, Episode, Favorite, MetadataResponse, Playback, PlaybackDiagnostic, PlaybackKind, Progress, Session, Source, TranscodePlayback, VodTracks } from '../models';
 
 const BASE = '/api/v1';
 
@@ -47,6 +47,15 @@ export class ApiService {
     if (language) params = params.set('language', language);
     if (search.trim()) params = params.set('search', search.trim());
     return this.http.get<CatalogPage>(`${BASE}/sources/${encodeURIComponent(sourceId)}/items`, { params });
+  }
+  discovery(sourceId: string, type: 'movie'|'series', genre: string, categoryId: string, language: string, search: string, cursor = ''): Observable<DiscoveryPage> {
+    let params = new HttpParams().set('type', type);
+    if (genre) params = params.set('genre', genre);
+    if (categoryId) params = params.set('categoryId', categoryId);
+    if (language) params = params.set('language', language);
+    if (search.trim()) params = params.set('search', search.trim());
+    if (cursor) params = params.set('cursor', cursor);
+    return this.http.get<DiscoveryPage>(`${BASE}/sources/${encodeURIComponent(sourceId)}/discovery`, { params });
   }
   item(sourceId: string, kind: CatalogKind, itemId: string): Observable<import('../models').CatalogItem> {
     return this.http.get<import('../models').CatalogItem>(`${BASE}/sources/${encodeURIComponent(sourceId)}/items/${kind}/${encodeURIComponent(itemId)}`);

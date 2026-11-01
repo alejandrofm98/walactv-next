@@ -94,26 +94,102 @@ const SECTIONS: { id: LibrarySection; label: string; glyph: string; group: strin
               <span class="status-orb"></span><div class="status-copy"><strong>{{ catalogStatusLabel() }}</strong><small>{{ catalogStatusDetail() }}</small></div>
               <button class="refresh-catalog" [disabled]="catalogStatus()?.status === 'syncing'" (click)="refreshCatalog()">{{ catalogStatus()?.status === 'syncing' ? 'Actualizando…' : 'Actualizar lista' }} <svg aria-hidden="true"><use href="/icons.svg#refresh"/></svg></button>
             </div>
-            <div class="catalog-toolbar"><div class="catalog-results"><span class="live-indicator" [class.is-live]="section() === 'live'"></span><span class="result-count">{{ total() }} {{ total() === 1 ? 'título' : 'títulos' }}</span></div><div class="catalog-actions"><label class="search-box"><span aria-hidden="true"><svg><use href="/icons.svg#search"/></svg></span><input type="search" maxlength="150" placeholder="Buscar por nombre…" [ngModel]="search()" (ngModelChange)="onSearch($event)" aria-label="Buscar por nombre en todo el catálogo"></label><select aria-label="Idioma aproximado" [ngModel]="languageId()" (ngModelChange)="chooseLanguage($event)"><option value="">Todos los idiomas</option>@for (language of languages(); track language.id) {<option [value]="language.id">{{ language.name }}</option>}</select><select aria-label="Categoría" [disabled]="categoriesLoading()" [ngModel]="categoryId()" (ngModelChange)="chooseCategory($event)"><option value="">{{ categoriesLoading() ? 'Cargando categorías…' : 'Todas las categorías' }}</option>@for (cat of categories(); track cat.id) {<option [value]="cat.id">{{ cat.name }}</option>}</select></div></div>
+            @if (section() === 'movie' || section() === 'series') {
+              <div class="discovery-mode"><button class="outline-button" (click)="toggleDiscovery()">{{ viewState.discoveryMode() ? 'Volver al catálogo IPTV' : 'Descubrir con Cinemeta' }}</button>
+                @if (viewState.discoveryMode()) { <span>Atribución Cinemeta · coincidencias IPTV verificadas solo por IMDb.</span> }
+              </div>
+            }
+            <div class="catalog-toolbar"><div class="catalog-results"><span class="live-indicator" [class.is-live]="section() === 'live'"></span><span class="result-count">{{ viewState.discoveryMode() ? items().length + ' coincidencias IPTV' : total() + (total() === 1 ? ' título' : ' títulos') }}</span></div><div class="catalog-actions"><label class="search-box"><span aria-hidden="true"><svg><use href="/icons.svg#search"/></svg></span><input type="search" maxlength="150" [placeholder]="viewState.discoveryMode() ? 'Buscar en Cinemeta…' : 'Buscar por nombre…'" [ngModel]="viewState.discoveryMode() ? viewState.discoverySearchDraft() : search()" (ngModelChange)="viewState.discoveryMode() ? onDiscoverySearch($event) : onSearch($event)" [attr.aria-label]="viewState.discoveryMode() ? 'Búsqueda externa de Cinemeta' : 'Buscar por nombre en todo el catálogo'"></label><select aria-label="Idioma aproximado" [ngModel]="languageId()" (ngModelChange)="chooseLanguage($event)"><option value="">Todos los idiomas</option>@for (language of languages(); track language.id) {<option [value]="language.id">{{ language.name }}</option>}</select><select aria-label="Categoría" [disabled]="categoriesLoading()" [ngModel]="categoryId()" (ngModelChange)="chooseCategory($event)"><option value="">{{ categoriesLoading() ? 'Cargando categorías…' : 'Todas las categorías' }}</option>@for (cat of categories(); track cat.id) {<option [value]="cat.id">{{ cat.name }}</option>}</select></div></div>
+            @if (viewState.discoveryMode()) { <div class="discovery-controls"><label>Género Cinemeta <select [ngModel]="viewState.discoveryGenre()" (ngModelChange)="chooseDiscoveryGenre($event)"><option value="">Popular · todos</option>@for (genre of discoveryGenresForSection(); track genre.id) { <option [value]="genre.id">{{ genre.label }}</option> }</select></label><button class="outline-button" (click)="submitDiscoverySearch()">Buscar con Cinemeta</button><small>La búsqueda se envía solo al confirmar.</small></div> }
             <p class="language-note">Los idiomas se infieren de las etiquetas del proveedor; pueden no coincidir con las pistas de audio.</p>
             @if (error()) { <div class="inline-error" role="alert">{{ error() }} <button (click)="retryContent()">Reintentar</button><a routerLink="/" [state]="contentNavigationState()">Volver al catálogo</a></div> }
             @if (busy()) { <div class="loading-grid">@for (_ of [1,2,3,4,5,6,7,8]; track $index) {<div class="skeleton"></div>}</div> }
             @else if (items().length) {
               <div class="media-grid">@for (item of items(); track item.kind + ':' + item.id + ':' + item.categoryId; let i = $index) {<article class="media-card"><a class="poster poster-{{ i % 8 }}" [class.poster-live]="section() === 'live'" [routerLink]="itemUrl(item)" [state]="contentNavigationState(item.kind + ':' + item.id)" [attr.data-content-key]="item.kind + ':' + item.id" (click)="rememberCatalogContext($event, item.kind + ':' + item.id)" [attr.aria-label]="(section() === 'live' ? 'Reproducir ' : item.kind === 'series' ? 'Ver episodios de ' : 'Abrir ficha de ') + displayTitle(item.title, item.kind)">@if (section() === 'live') { <span class="poster-tag">EN VIVO</span> }@if (item.imageUrl) { <img class="poster-art" [src]="item.imageUrl" [alt]="'Imagen de ' + displayTitle(item.title, item.kind)" loading="lazy" (error)="hideBrokenImage($event)"> } @else if (section() === 'live') { <span class="live-logo-fallback" aria-hidden="true">{{ displayTitle(item.title, item.kind).slice(0, 2).toUpperCase() }}</span> } @else { <span class="poster-art-fallback" aria-hidden="true"><svg><use [attr.href]="item.kind === 'series' ? '/icons.svg#series' : '/icons.svg#movie'"></use></svg></span> }<span class="play-disc"><svg aria-hidden="true"><use [attr.href]="section() === 'live' ? '/icons.svg#play' : '/icons.svg#plus'"/></svg></span></a><div class="media-meta"><strong>{{ displayTitle(item.title, item.kind) }}</strong><button class="favorite" [class.active]="isFavorite(item.contentKey)" [disabled]="!item.contentKey || item.kind === 'series'" [attr.aria-label]="isFavorite(item.contentKey) ? 'Quitar de mi lista' : 'Añadir a mi lista'" (click)="toggleFavorite(item)"><svg aria-hidden="true"><use [attr.href]="isFavorite(item.contentKey) ? '/icons.svg#heart-fill' : '/icons.svg#heart'"/></svg></button></div><small class="media-sub">{{ categoryName(item.categoryId) }} <span>·</span> {{ languageName(item.language) }}</small></article> }</div>
-              @if (pageCount() > 1) { <div class="pagination"><button [disabled]="page() <= 1" (click)="setPage(page()-1)"><svg aria-hidden="true"><use href="/icons.svg#arrow-left"/></svg> Anterior</button><span>{{ page() }} <i>/</i> {{ pageCount() }}</span><button [disabled]="page() >= pageCount()" (click)="setPage(page()+1)">Siguiente <svg aria-hidden="true"><use href="/icons.svg#arrow-right"/></svg></button></div> }
-            } @else if (!error()) { <div class="empty-state compact"><span aria-hidden="true"><svg><use href="/icons.svg#search"/></svg></span><strong>{{ search() ? 'Sin resultados' : 'Sin contenido' }}</strong><small>{{ search() ? 'Cambia la búsqueda.' : 'Prueba otra categoría o idioma.' }}</small></div> }
+              @if (viewState.discoveryMode()) { <div class="pagination"><button [disabled]="page() <= 1" (click)="previousDiscovery()"><svg aria-hidden="true"><use href="/icons.svg#arrow-left"/></svg> Anterior</button><span>{{ viewState.discoveryPartial() ? 'Búsqueda parcial' : 'Coincidencias IPTV · IMDb' }}</span><button [disabled]="!viewState.discoveryNextCursor()" (click)="continueDiscovery()">{{ items().length ? 'Continuar' : 'Seguir buscando coincidencias' }} <svg aria-hidden="true"><use href="/icons.svg#arrow-right"/></svg></button></div> }
+              @else if (pageCount() > 1) { <div class="pagination"><button [disabled]="page() <= 1" (click)="setPage(page()-1)"><svg aria-hidden="true"><use href="/icons.svg#arrow-left"/></svg> Anterior</button><span>{{ page() }} <i>/</i> {{ pageCount() }}</span><button [disabled]="page() >= pageCount()" (click)="setPage(page()+1)">Siguiente <svg aria-hidden="true"><use href="/icons.svg#arrow-right"/></svg></button></div> }
+            } @else if (!error()) { <div class="empty-state compact"><span aria-hidden="true"><svg><use href="/icons.svg#search"/></svg></span><strong>{{ viewState.discoveryMode() ? (viewState.discoveryPartial() ? 'Aún no hay coincidencias en esta parte' : 'Sin coincidencias verificadas') : (search() ? 'Sin resultados' : 'Sin contenido') }}</strong><small>{{ viewState.discoveryMode() ? 'La cobertura se basa en IDs IMDb presentes en tu fuente.' : (search() ? 'Cambia la búsqueda.' : 'Prueba otra categoría o idioma.') }}</small>@if (viewState.discoveryMode() && page() > 1) { <button class="outline-button" (click)="previousDiscovery()">Anterior</button> }@if (viewState.discoveryMode() && viewState.discoveryHasMore()) { <button class="outline-button" (click)="continueDiscovery()">Seguir buscando coincidencias</button> }</div> }
             @if (progress().length) {<section class="continue-row"><div class="section-heading"><div><h2>Seguir viendo</h2></div></div><div class="progress-list">@for (entry of progress().slice(0,4); track entry.contentKey) {<button class="progress-item" (click)="resume(entry)"><span class="progress-play"><svg aria-hidden="true"><use href="/icons.svg#play"/></svg></span><span><b>{{ entry.title }}</b><small>{{ formatTime(entry.positionSeconds) }} de {{ formatTime(entry.durationSeconds) }}</small></span><i><span [style.width.%]="entry.durationSeconds ? entry.positionSeconds / entry.durationSeconds * 100 : 0"></span></i></button>}</div></section> }
           </section>
         }
       </main>
-      @if (detailFor()) { <div class="modal-backdrop" (click)="closeDetail()" (keydown)="handleDetailKeydown($event, 'detail')"><section #detailDialog class="detail-dialog" role="dialog" aria-modal="true" aria-labelledby="detail-title" (click)="$event.stopPropagation()" tabindex="-1"><button #detailClose class="detail-close" aria-label="Cerrar ficha" (click)="closeDetail()"><svg aria-hidden="true"><use href="/icons.svg#close"/></svg></button><div class="detail-layout"><div class="detail-art">@if (metadata()?.metadata?.posterUrl || detailFor()?.imageUrl) {<img [src]="metadata()?.metadata?.posterUrl || detailFor()?.imageUrl" [alt]="'Imagen de ' + (metadata()?.metadata?.title || detailFor()?.title)" (error)="hideBrokenImage($event)">} @else {<svg aria-hidden="true"><use [attr.href]="detailFor()?.kind === 'series' ? '/icons.svg#series' : '/icons.svg#movie'"/></svg>}</div><div class="detail-copy"><h2 id="detail-title">{{ metadata()?.metadata?.title || detailFor()?.title }}</h2><p class="detail-source-note">{{ metadataStatusText() }}</p>@if (metadata()?.metadata?.overview) {<p class="metadata-overview">{{ metadata()?.metadata?.overview }}</p>}@if (metadata()?.metadata?.genres?.length) {<p class="metadata-detail-line"><b>Géneros:</b> {{ metadataGenreText() }}</p>}@if (metadata()?.metadata?.credits?.length) {<p class="metadata-detail-line"><b>Reparto y equipo:</b> {{ metadataCreditText() }}</p>}<div class="detail-facts"><span><small>CATEGORÍA</small><b>{{ categoryName(detailFor()?.categoryId || '') }}</b></span><span><small>IDIOMA APROXIMADO</small><b>{{ languageName(detailFor()?.language || 'und') }}</b></span>@if (metadata()?.metadata?.year) {<span><small>AÑO</small><b>{{ metadata()?.metadata?.year }}</b></span>}@if (metadata()?.metadata?.runtime) {<span><small>DURACIÓN</small><b>{{ metadata()?.metadata?.runtime }} min</b></span>}@if (metadata()?.metadata?.rating !== undefined) {<span><small>VALORACIÓN TMDB</small><b>{{ metadata()?.metadata?.rating }}/10</b></span>}@if (detailFor()?.containerExtension) {<span><small>FORMATO</small><b>{{ detailFor()?.containerExtension?.toUpperCase() }}</b></span>}</div>
-              @if (detailFor()?.kind === 'movie' && source()) {<a class="detail-play lime-button" [routerLink]="movieUrl()" [state]="contentNavigationState()"><svg aria-hidden="true"><use href="/icons.svg#play"/></svg> Reproducir película</a>}
-              @else {<div class="season-heading"><label for="season-select">Temporada</label>@if (seasons().length) {<select id="season-select" [ngModel]="selectedSeason()" (ngModelChange)="selectSeason(+$event)">@for (season of seasons(); track season) {<option [ngValue]="season">Temporada {{ season }}</option>}</select>}</div>
-                @if (metadataSeason()?.season?.overview) {<p class="metadata-overview">{{ metadataSeason()?.season?.overview }}</p>}@else if (metadataSeasonStatusText()) {<p class="modal-status">{{ metadataSeasonStatusText() }}</p>}
-                @if (episodesLoading()) {<p class="modal-status">Cargando episodios…</p>}@else if (filteredEpisodes().length) {<div class="episode-list">@for (ep of filteredEpisodes(); track ep.id) {<div class="episode-row"><a class="episode-main" [routerLink]="episodeUrl(ep)" [state]="contentNavigationState()"><span class="episode-number">T{{ ep.season }} · E{{ ep.episode }}</span><span><b>{{ metadataEpisodeTitle(ep) }}</b><small>{{ ep.containerExtension.toUpperCase() }}</small></span><i><svg aria-hidden="true"><use href="/icons.svg#play"/></svg></i></a><button class="favorite" [class.active]="isFavorite(ep.contentKey)" [disabled]="!ep.contentKey" [attr.aria-label]="isFavorite(ep.contentKey) ? 'Quitar de mi lista' : 'Añadir a mi lista'" (click)="toggleEpisodeFavorite(ep)"><svg aria-hidden="true"><use [attr.href]="isFavorite(ep.contentKey) ? '/icons.svg#heart-fill' : '/icons.svg#heart'"/></svg></button></div>}</div>}@else{<p class="modal-status">{{ episodes().length ? 'No hay episodios en esta temporada.' : 'No hay episodios disponibles.' }}</p>}
+      @if (detailFor()) {
+        <div class="modal-backdrop detail-backdrop" (click)="closeDetail()" (keydown)="handleDetailKeydown($event, 'detail')">
+          <section #detailDialog class="detail-dialog" role="dialog" aria-modal="true" aria-labelledby="detail-title" (click)="$event.stopPropagation()" tabindex="-1">
+            <button #detailClose class="detail-close" aria-label="Cerrar ficha" (click)="closeDetail()"><svg aria-hidden="true"><use href="/icons.svg#close"/></svg></button>
+            <header class="detail-hero">
+              @if (metadata()?.metadata?.backdropUrl) { <img class="detail-backdrop-art" [src]="metadata()?.metadata?.backdropUrl" alt="" aria-hidden="true"> }
+              <div class="detail-art">
+                @if (metadata()?.metadata?.posterUrl || detailFor()?.imageUrl) {
+                  <img [src]="metadata()?.metadata?.posterUrl || detailFor()?.imageUrl" [alt]="'Imagen de ' + (metadata()?.metadata?.title || detailFor()?.title)" (error)="hideBrokenImage($event)">
+                } @else {
+                  <svg aria-hidden="true"><use [attr.href]="detailFor()?.kind === 'series' ? '/icons.svg#series' : '/icons.svg#movie'"/></svg>
+                }
+              </div>
+              <div class="detail-heading">
+                <p class="detail-kind">{{ detailFor()?.kind === 'series' ? 'SERIE' : 'PELÍCULA' }}</p>
+                <h2 id="detail-title">{{ metadata()?.metadata?.title || detailFor()?.title }}</h2>
+                <p class="detail-source-note">{{ metadataStatusText() }}</p>
+                @if (detailFor()?.kind === 'movie' && source()) {
+                  <a class="detail-play lime-button" [routerLink]="movieUrl()" [state]="contentNavigationState()"><svg aria-hidden="true"><use href="/icons.svg#play"/></svg> Reproducir película</a>
+                }
+              </div>
+            </header>
+            <div class="detail-copy">
+              @if (metadata()?.metadata?.overview) { <p class="metadata-overview">{{ metadata()?.metadata?.overview }}</p> }
+              @if (metadata()?.metadata?.genres?.length) { <p class="metadata-detail-line"><b>Géneros</b><span>{{ metadataGenreText() }}</span></p> }
+              @if (metadata()?.metadata?.credits?.length) { <p class="metadata-detail-line"><b>Reparto y equipo</b><span>{{ metadataCreditText() }}</span></p> }
+              <div class="detail-facts">
+                <span><small>Categoría</small><b>{{ categoryName(detailFor()?.categoryId || '') }}</b></span>
+                <span><small>Idioma aproximado</small><b>{{ languageName(detailFor()?.language || 'und') }}</b></span>
+                @if (metadata()?.metadata?.year) { <span><small>Año</small><b>{{ metadata()?.metadata?.year }}</b></span> }
+                @if (metadata()?.metadata?.runtime) { <span><small>Duración</small><b>{{ metadata()?.metadata?.runtime }} min</b></span> }
+                @if (metadata()?.metadata?.rating !== undefined) { <span><small>Valoración TMDB</small><b>{{ metadata()?.metadata?.rating }}/10</b></span> }
+                @if (detailFor()?.containerExtension) { <span><small>Formato</small><b>{{ detailFor()?.containerExtension?.toUpperCase() }}</b></span> }
+              </div>
+              @if (detailFor()?.kind === 'series') {
+                <section class="detail-season-section" aria-label="Episodios de la serie">
+                  <div class="season-heading">
+                    <h3>Episodios</h3>
+                    @if (seasons().length) {
+                      <label for="season-select">Temporada
+                        <select id="season-select" [ngModel]="selectedSeason()" (ngModelChange)="selectSeason(+$event)">
+                          @for (season of seasons(); track season) { <option [ngValue]="season">Temporada {{ season }}</option> }
+                        </select>
+                      </label>
+                    }
+                  </div>
+                  @if (metadataSeason()?.season?.overview) { <p class="metadata-overview season-overview">{{ metadataSeason()?.season?.overview }}</p> }
+                  @else if (metadataSeasonStatusText()) { <p class="modal-status">{{ metadataSeasonStatusText() }}</p> }
+                  @if (episodesLoading()) { <p class="modal-status">Cargando episodios…</p> }
+                  @else if (filteredEpisodes().length) {
+                    <div class="episode-list">
+                      @for (ep of filteredEpisodes(); track ep.id) {
+                        <div class="episode-row">
+                          <a class="episode-main" [routerLink]="episodeUrl(ep)" [state]="contentNavigationState()">
+                            <span class="episode-number">T{{ ep.season }} · E{{ ep.episode }}</span>
+                            <span class="episode-info"><b>{{ metadataEpisodeTitle(ep) }}</b><small>{{ ep.containerExtension.toUpperCase() }}</small></span>
+                            <i><svg aria-hidden="true"><use href="/icons.svg#play"/></svg></i>
+                          </a>
+                          <button class="favorite" [class.active]="isFavorite(ep.contentKey)" [disabled]="!ep.contentKey" [attr.aria-label]="isFavorite(ep.contentKey) ? 'Quitar de mi lista' : 'Añadir a mi lista'" (click)="toggleEpisodeFavorite(ep)"><svg aria-hidden="true"><use [attr.href]="isFavorite(ep.contentKey) ? '/icons.svg#heart-fill' : '/icons.svg#heart'"/></svg></button>
+                        </div>
+                      }
+                    </div>
+                  } @else {
+                    <p class="modal-status">{{ episodes().length ? 'No hay episodios en esta temporada.' : 'No hay episodios disponibles.' }}</p>
+                  }
+                </section>
               }
-              @if (metadata()?.metadata) {<div class="metadata-credit"><a href="https://www.themoviedb.org" target="_blank" rel="noopener noreferrer" aria-label="TMDB, sitio oficial"><img class="tmdb-logo" alt="TMDB" src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_square_2-d537fb228cf3ded904ef09b136fe3fec72548ebc1fea3fbbd1ad9e36364db38b.svg"></a><small>Datos de TMDB · TMDB no respalda esta aplicación.</small></div>}
-            </div></div></section></div> }
+              @if (metadata()?.metadata) {
+                <div class="metadata-credit">
+                  <a href="https://www.themoviedb.org" target="_blank" rel="noopener noreferrer" aria-label="TMDB, sitio oficial"><img class="tmdb-logo" alt="TMDB" src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_square_2-d537fb228cf3ded904ef09b136fe3fec72548ebc1fea3fbbd1ad9e36364db38b.svg"></a>
+                  <small>Datos de TMDB · TMDB no respalda esta aplicación.</small>
+                </div>
+              }
+            </div>
+          </section>
+        </div>
+      }
       @if (confirmDeleteSource()) { <div class="modal-backdrop" (click)="closeDeleteConfirmation()" (keydown)="handleDetailKeydown($event, 'delete')"><section #deleteDialog class="episode-modal confirm-source-modal" role="alertdialog" aria-modal="true" aria-labelledby="delete-source-title" aria-describedby="delete-source-description" (click)="$event.stopPropagation()"><div class="modal-heading"><div><p class="eyebrow"><span class="eyebrow-line"></span> ELIMINAR FUENTE</p><h2 id="delete-source-title">¿Eliminar esta lista guardada?</h2></div><button class="cancel-delete-close" aria-label="Cancelar" (click)="closeDeleteConfirmation()"><svg aria-hidden="true"><use href="/icons.svg#close"/></svg></button></div><p id="delete-source-description">Se borrará la URL cifrada y el catálogo guardado de tu cuenta. Para volver a usar esta lista tendrás que introducir su URL otra vez.</p>@if(error()){<div class="inline-error" role="alert">{{ error() }}</div>}<div class="confirm-actions"><button #cancelDelete class="outline-button" (click)="closeDeleteConfirmation()">Cancelar</button><button class="delete-button" [disabled]="busy()" (click)="disconnect()">{{ busy() ? 'Eliminando…' : 'Eliminar fuente' }}</button></div></section></div> }
       @if (notice()) { <div class="toast" role="status">{{ notice() }}<button aria-label="Cerrar aviso" (click)="notice.set('')"><svg aria-hidden="true"><use href="/icons.svg#close"/></svg></button></div> }
     </div>
@@ -138,11 +214,23 @@ export class LibraryComponent implements OnInit {
   readonly route = inject(ActivatedRoute);
   readonly contentRoutes = inject(ContentRoutes);
   private readonly injector = inject(Injector);
-  private readonly viewState = inject(CatalogViewStateService);
+  readonly viewState = inject(CatalogViewStateService);
   private readonly destroyRef = inject(DestroyRef);
   readonly sections = SECTIONS;
   readonly groups = computed(() => [...new Set(SECTIONS.map(s => s.group))].map(name => ({ name, items: SECTIONS.filter(s => s.group === name) })));
   readonly section = this.viewState.section;
+  readonly discoveryGenres = [
+    { id: 'Action', label: 'Acción' }, { id: 'Adventure', label: 'Aventura' }, { id: 'Animation', label: 'Animación' }, { id: 'Biography', label: 'Biografía' },
+    { id: 'Comedy', label: 'Comedia' }, { id: 'Crime', label: 'Crimen' }, { id: 'Documentary', label: 'Documental' },
+    { id: 'Drama', label: 'Drama' }, { id: 'Family', label: 'Familiar' }, { id: 'Fantasy', label: 'Fantasía' },
+    { id: 'History', label: 'Historia' }, { id: 'Horror', label: 'Terror' }, { id: 'Sport', label: 'Deportes' },
+    { id: 'Mystery', label: 'Misterio' }, { id: 'Romance', label: 'Romance' }, { id: 'Sci-Fi', label: 'Ciencia ficción' },
+    { id: 'Thriller', label: 'Suspense' }, { id: 'War', label: 'Bélica' }, { id: 'Western', label: 'Western' },
+    { id: 'Reality-TV', label: 'Reality' }, { id: 'Talk-Show', label: 'Debate' }, { id: 'Game-Show', label: 'Concursos' },
+  ];
+  discoveryGenresForSection(): typeof this.discoveryGenres {
+    return this.section() === 'series' ? this.discoveryGenres : this.discoveryGenres.filter(genre => !['Reality-TV', 'Talk-Show', 'Game-Show'].includes(genre.id));
+  }
   readonly sectionLabel = computed(() => SECTIONS.find(s => s.id === this.section())?.label || 'Inicio');
   readonly source = signal<Source | null>(null);
   readonly sources = signal<Source[]>([]);
@@ -461,7 +549,17 @@ export class LibraryComponent implements OnInit {
   }
 
   selectSection(section: LibrarySection): void {
-    if (section !== this.section()) { this.search.set(''); this.categoryId.set(''); this.languageId.set(''); this.page.set(1); }
+    if (section !== this.section()) {
+      const wasDiscoveryType = this.section() === 'movie' || this.section() === 'series';
+      const isDiscoveryType = section === 'movie' || section === 'series';
+      this.search.set(''); this.categoryId.set(''); this.languageId.set(''); this.page.set(1);
+      if (wasDiscoveryType && isDiscoveryType) {
+        this.viewState.discoveryCursors.set([]); this.viewState.discoveryNextCursor.set(''); this.viewState.discoveryHasMore.set(false); this.viewState.discoveryPartial.set(false); this.items.set([]);
+      }
+    }
+    if (section !== 'movie' && section !== 'series') {
+      this.viewState.discoveryMode.set(false); this.viewState.discoveryCursors.set([]); this.viewState.discoveryNextCursor.set(''); this.viewState.discoveryHasMore.set(false); this.viewState.discoveryPartial.set(false);
+    }
     this.section.set(section); this.error.set('');
     if (this.isContentDetailRoute()) {
       void this.router.navigateByUrl('/', { state: this.contentNavigationState() });
@@ -589,6 +687,7 @@ export class LibraryComponent implements OnInit {
   loadItems(): void {
     const source = this.source(), section = this.section();
     if (!source || !['live','movie','series'].includes(section)) return;
+    if (this.viewState.discoveryMode() && (section === 'movie' || section === 'series')) { this.loadDiscovery(this.viewState.discoveryCursors()[this.page()-1] || ''); return; }
     this.busy.set(true); this.error.set('');
     this.itemsRequest?.unsubscribe();
     this.itemsRequest = this.api.items(source.id, section as CatalogKind, this.categoryId(), this.languageId(), this.page(), this.search()).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
@@ -605,11 +704,13 @@ export class LibraryComponent implements OnInit {
     });
   }
 
-  chooseCategory(id: string): void { this.categoryId.set(id); this.page.set(1); this.loadItems(); }
+  chooseCategory(id: string): void { this.categoryId.set(id); this.page.set(1); this.viewState.discoveryCursors.set([]); this.viewState.discoveryNextCursor.set(''); this.viewState.discoveryHasMore.set(false); if (this.viewState.discoveryMode()) this.items.set([]); this.loadItems(); }
   chooseLanguage(id: string): void {
     this.languageId.set(id);
     this.categoryId.set('');
     this.page.set(1);
+    this.viewState.discoveryCursors.set([]); this.viewState.discoveryNextCursor.set(''); this.viewState.discoveryHasMore.set(false);
+    if (this.viewState.discoveryMode()) this.items.set([]);
     const source = this.source(), section = this.section();
     if (source && ['live','movie','series'].includes(section)) this.loadCategoriesForLanguage(source.id, section as CatalogKind, id);
     this.loadItems();
@@ -617,9 +718,48 @@ export class LibraryComponent implements OnInit {
   setPage(page: number): void { this.page.set(page); this.loadItems(); }
   onSearch(value: string): void {
     this.search.set(value);
+    if (this.viewState.discoveryMode()) return;
     this.itemsRequest?.unsubscribe();
     if (this.searchTimer) clearTimeout(this.searchTimer);
     this.searchTimer = setTimeout(() => { this.page.set(1); this.loadItems(); }, 280);
+  }
+
+  toggleDiscovery(): void {
+    const enabled = !this.viewState.discoveryMode();
+    this.viewState.discoveryMode.set(enabled);
+    this.viewState.discoveryCursors.set([]); this.viewState.discoveryNextCursor.set(''); this.viewState.discoveryHasMore.set(false); this.viewState.discoveryGenre.set(''); this.viewState.discoverySearchDraft.set(''); this.viewState.discoverySearch.set('');
+    this.page.set(1); this.items.set([]); this.total.set(0); this.error.set('');
+    if (enabled) this.loadDiscovery(''); else this.loadItems();
+  }
+  onDiscoverySearch(value: string): void { this.viewState.discoverySearchDraft.set(value.slice(0, 150)); }
+  submitDiscoverySearch(): void { this.viewState.discoverySearch.set(this.viewState.discoverySearchDraft().slice(0,150)); this.viewState.discoveryCursors.set([]); this.viewState.discoveryNextCursor.set(''); this.viewState.discoveryHasMore.set(false); this.page.set(1); this.items.set([]); this.loadDiscovery(''); }
+  chooseDiscoveryGenre(value: string): void { this.viewState.discoveryGenre.set(value); this.viewState.discoveryCursors.set([]); this.viewState.discoveryNextCursor.set(''); this.viewState.discoveryHasMore.set(false); this.page.set(1); this.items.set([]); this.loadDiscovery(''); }
+  continueDiscovery(): void {
+    const cursor = this.viewState.discoveryNextCursor(); if (!cursor) return;
+    const currentPage = this.page();
+    this.viewState.discoveryCursors.update(values => [...values.slice(0,currentPage), cursor]); this.page.set(currentPage + 1); this.loadDiscovery(cursor);
+  }
+  previousDiscovery(): void {
+    const page = this.page(); if (page <= 1) return;
+    const cursor = this.viewState.discoveryCursors()[page - 2] ?? '';
+    this.page.set(page - 1); this.loadDiscovery(cursor);
+  }
+  private loadDiscovery(cursor: string): void {
+    const source = this.source(), section = this.section();
+    if (!source || (section !== 'movie' && section !== 'series')) return;
+    this.itemsRequest?.unsubscribe(); this.busy.set(true); this.error.set('');
+    const expectedSource = source.id, expectedSection = section, expectedPage = this.page();
+    this.itemsRequest = this.api.discovery(source.id, section, this.viewState.discoveryGenre(), this.categoryId(), this.languageId(), this.viewState.discoverySearch(), cursor).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: result => {
+        if (this.source()?.id !== expectedSource || this.section() !== expectedSection || this.page() !== expectedPage) return;
+        this.items.set(result.items); this.total.set(result.items.length); this.busy.set(false);
+        if (expectedPage === 1) this.viewState.discoveryCursors.set([result.cursor || cursor]);
+        this.viewState.discoveryNextCursor.set(result.nextCursor || ''); this.viewState.discoveryHasMore.set(result.hasMore); this.viewState.discoveryPartial.set(result.partial); this.viewState.discoveryStatus.set(result.status);
+        if (result.status === 'restart_required') { this.page.set(1); this.error.set('La búsqueda caducó o cambió el catálogo. Reiníciala para continuar.'); this.viewState.discoveryCursors.set([]); this.viewState.discoveryNextCursor.set(''); }
+        const resolvedSource = this.source();
+        if (resolvedSource) void Promise.all(result.items.map(async item => [item.kind + ':' + item.id, await this.contentRoutes.item(resolvedSource, item)] as const)).then(entries => { if (this.source()?.id === resolvedSource.id) this.contentUrls.update(urls => ({ ...urls, ...Object.fromEntries(entries) })); });
+      }, error: err => { if (this.source()?.id !== expectedSource) return; this.busy.set(false); if (err?.error?.status === 'unavailable') this.viewState.discoveryStatus.set('unavailable'); this.error.set(this.safeMessage(err, 'Cinemeta no está disponible temporalmente. El catálogo IPTV sigue disponible.')); },
+    });
   }
 
   private presentDetail(item: CatalogItem, trigger: HTMLElement | null = null): void {

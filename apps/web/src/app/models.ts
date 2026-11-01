@@ -9,6 +9,7 @@ export interface Source { id: string; label: string; accountKey: string; expires
 export interface Category { id: string; name: string; }
 export interface CatalogItem { id: string; title: string; kind: CatalogKind; containerExtension?: string; contentKey?: string; categoryId: string; language: string; imageUrl?: string; }
 export interface CatalogPage { items: CatalogItem[]; total: number; page: number; pageSize: number; }
+export interface DiscoveryPage { items: (CatalogItem & { externalId: string })[]; cursor?: string; nextCursor?: string; hasMore: boolean; partial: boolean; status: 'ready' | 'unavailable' | 'restart_required'; coverage: 'imdb-only'; }
 export interface CatalogLanguage { id: string; name: string; }
 export interface CatalogStatus { status: 'empty' | 'syncing' | 'ready' | 'error'; updatedAt?: string; errorCode?: string; counts: Record<CatalogKind, number>; }
 export interface Episode { id: string; title: string; season: number; episode: number; containerExtension: string; contentKey?: string; }

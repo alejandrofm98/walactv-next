@@ -34,10 +34,11 @@ type Config struct {
 }
 
 type API struct {
-	cfg      Config
-	mux      *http.ServeMux
-	private  *privateState
-	metadata *metadataService
+	cfg       Config
+	mux       *http.ServeMux
+	private   *privateState
+	metadata  *metadataService
+	discovery *cinemetaService
 }
 
 type user struct {
@@ -61,6 +62,7 @@ const sessionKey contextKey = "session"
 func New(cfg Config) *API {
 	a := &API{cfg: cfg, mux: http.NewServeMux(), private: newPrivateState(cfg)}
 	a.metadata = newMetadataService(cfg)
+	a.discovery = newCinemetaService(cfg)
 	a.routes()
 	return a
 }
@@ -124,6 +126,10 @@ func (a *API) routes() {
 	a.mux.Handle("GET /api/v1/sources/{id}/categories", a.auth(http.HandlerFunc(a.getCategories)))
 	a.mux.Handle("GET /api/v1/sources/{id}/languages", a.auth(http.HandlerFunc(a.getLanguages)))
 	a.mux.Handle("GET /api/v1/sources/{id}/catalog", a.auth(http.HandlerFunc(a.getCatalogStatus)))
+	a.mux.Handle("GET /api/v1/sources/{id}/discovery", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "private, no-store")
+		a.auth(http.HandlerFunc(a.getCinemetaDiscovery)).ServeHTTP(w, r)
+	}))
 	a.mux.Handle("POST /api/v1/sources/{id}/catalog/refresh", a.auth(a.csrf(http.HandlerFunc(a.refreshCatalog))))
 	a.mux.Handle("GET /api/v1/sources/{id}/images/{kind}/{itemId}", a.auth(http.HandlerFunc(a.getCatalogImage)))
 	a.mux.Handle("GET /api/v1/sources/{id}/items", a.auth(http.HandlerFunc(a.getItems)))
@@ -212,6 +218,7 @@ func (a *API) logout(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	a.private.mu.Unlock()
+	a.discovery.invalidateUser(s.User.ID)
 	http.SetCookie(w, &http.Cookie{Name: "walactv_session", Value: "", Path: "/", HttpOnly: true, Secure: strings.HasPrefix(a.cfg.Origin, "https://"), SameSite: http.SameSiteStrictMode, MaxAge: -1})
 	w.WriteHeader(http.StatusNoContent)
 }

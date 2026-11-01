@@ -332,9 +332,9 @@ func (a *API) deleteSource(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	a.private.mu.Lock()
-	defer a.private.mu.Unlock()
 	src := a.private.sources[id]
 	if (src == nil || src.UserID != s.User.ID) && a.cfg.DB == nil {
+		a.private.mu.Unlock()
 		writeError(w, 404, "NOT_FOUND", "Source not found")
 		return
 	}
@@ -343,6 +343,8 @@ func (a *API) deleteSource(w http.ResponseWriter, r *http.Request) {
 		delete(a.private.sources, id)
 		a.private.forgetSourceLocked(id)
 	}
+	a.private.mu.Unlock()
+	a.discovery.invalidateSource(id)
 	w.WriteHeader(http.StatusNoContent)
 }
 

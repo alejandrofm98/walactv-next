@@ -30,6 +30,8 @@ const (
 	diagnosticTranscoderFailed    = "transcoder_failed"
 )
 
+const mediaUpstreamRetries = 2
+
 type mediaAttemptKey struct{}
 
 type mediaAttempt struct {
@@ -377,7 +379,7 @@ func (a *API) proxyMedia(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	client := a.private.media
-	resp, err := client.Do(req)
+	resp, err := requestMediaWithRetry(client, req)
 	if err != nil {
 		if errors.Is(ctx.Err(), context.Canceled) {
 			return
@@ -475,6 +477,40 @@ func (a *API) proxyMedia(w http.ResponseWriter, r *http.Request) {
 	}
 	if _, err := io.Copy(w, stream); err != nil && r.Context().Err() == nil {
 		a.setPlaybackDiagnostic(p, diagnosticGeneration, classifyMediaError(err), 0)
+	}
+}
+
+// requestMediaWithRetry retries only idempotent media requests that receive a
+// transient server error. Providers occasionally return a brief 5xx while
+// starting a VOD stream; a small bounded retry avoids making the user reload.
+func requestMediaWithRetry(client *http.Client, req *http.Request) (*http.Response, error) {
+	for attempt := 0; ; attempt++ {
+		resp, err := client.Do(req.Clone(req.Context()))
+		if err != nil || resp == nil || !retryableMediaStatus(resp.StatusCode) || attempt >= mediaUpstreamRetries {
+			return resp, err
+		}
+
+		// Do not reuse a response body from a failed attempt or let its payload
+		// reach the player. Closing it immediately also bounds retry latency.
+		if resp.Body != nil {
+			_ = resp.Body.Close()
+		}
+		timer := time.NewTimer(time.Duration(attempt+1) * 150 * time.Millisecond)
+		select {
+		case <-req.Context().Done():
+			timer.Stop()
+			return nil, req.Context().Err()
+		case <-timer.C:
+		}
+	}
+}
+
+func retryableMediaStatus(status int) bool {
+	switch status {
+	case http.StatusInternalServerError, http.StatusBadGateway, http.StatusServiceUnavailable, http.StatusGatewayTimeout:
+		return true
+	default:
+		return false
 	}
 }
 

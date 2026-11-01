@@ -20,7 +20,7 @@ Por decisión expresa del usuario se eliminaron en Dokploy los servicios Compose
 
 La web anterior ya no está disponible como servicio de Dokploy. La comprobación previa a publicar Next observó que aún no había despliegues; esa instantánea quedó supersedida por la revalidación actual de arriba, que confirma despliegues correctos de `WEB NEXT`. La API antigua ya no está disponible para Android. Las observaciones siguientes del 30 de octubre son históricas y no describen el estado actual de esos tres servicios.
 
-## Estado comprobado · 2026-10-30
+## Snapshot histórico de despliegue · 2026-10-30 (supersedido por la revalidación del 2026-11-01)
 
 - El repositorio público [walactv-next](https://github.com/alejandrofm98/walactv-next) se inicializó en `main` con el commit `27cd12f5dc73759070cc710e77c360488bd713e8`. Antes del push se comprobó que el remoto estaba vacío, no había refspec de push y ningún servicio Dokploy de Next estaba asociado.
 - Se creó el proyecto Dokploy `WALACTV NEXT`, entorno `production`, y el servicio Compose `WEB NEXT`. Está vinculado al repositorio público, rama `main` y `compose.dokploy.yml`; Auto Deploy está apagado mientras se completa la configuración. Todavía no se ha ejecutado ningún despliegue de Next.
@@ -31,7 +31,9 @@ La web anterior ya no está disponible como servicio de Dokploy. La comprobació
 - El usuario decidió crear la PostgreSQL propia con el recurso Database → PostgreSQL de Dokploy, separado de Compose. Todavía no se ha creado: el usuario introducirá la contraseña y los valores de secretos en el panel; este agente no los generará ni cargará. No hay destino S3/R2 configurado; por decisión del usuario, la preparación de backups queda pendiente hasta inmediatamente antes de importar la lista IPTV real. No se importará esa lista antes de configurar y comprobar el backup.
 - El dominio sigue en la web anterior; no se ha transferido ni se ha desplegado Next. Ningún servicio o dato legacy se modificó o eliminó.
 
-## Destinos pendientes
+## Destinos pendientes · snapshot histórico del 2026-10-30 (supersedido)
+
+La tabla siguiente conserva la fotografía previa a configurar `DB NEXT` y desplegar `WEB NEXT`; sus estados de Auto Deploy, PostgreSQL y primer despliegue ya no describen el entorno actual. Para el destino y Auto Deploy actuales, usar la revalidación Dokploy fechada 2026-11-01 al inicio de este documento (`WEB NEXT` en `main`, `compose.dokploy.yml`, producción y `On Push`). No se modificó la configuración del panel durante esta implementación.
 
 | Elemento | Estado | Evidencia necesaria |
 |---|---|---|
@@ -45,9 +47,9 @@ La web anterior ya no está disponible como servicio de Dokploy. La comprobació
 
 El Compose productivo es `compose.dokploy.yml`, que extiende las definiciones de `compose.yml`. Usa la red `dokploy-network` (o el nombre confirmado mediante `DOKPLOY_NETWORK_NAME`) para permitir acceso interno a PostgreSQL y al proxy. `compose.local.yml` es solo para desarrollo y nunca se combina en Dokploy. Consulta el [runbook de publicación y recuperación](dokploy-release.md).
 
-## Inventario antiguo y candidatos de retirada
+## Inventario legacy · snapshot del 2026-10-30 (histórico; parcialmente supersedido)
 
-Revalidado en la interfaz autenticada de Dokploy el 2026-10-30. La tabla indica actividad observada en contenedores y configuración, no métricas de tráfico ni prueba completa de consumidores. El inventario privado guarda rutas e identificadores exactos.
+Esta fotografía se tomó en la interfaz autenticada de Dokploy el 2026-10-30. La retirada de servicios descrita en la sección del 2026-11-01 al inicio de este documento la supersede donde difieran estos estados. La tabla solo indica actividad y configuración observadas entonces, no métricas de tráfico ni prueba completa de consumidores; revalidar en el panel antes de actuar.
 
 | Recurso | Evidencia actual | Evaluación |
 |---|---|---|
@@ -60,14 +62,14 @@ Revalidado en la interfaz autenticada de Dokploy el 2026-10-30. La tabla indica 
 
 Las dos instancias de scraper y las dos API tienen Auto Deploy `On Push`. Una rama legacy puede afectar más de un servicio/entorno; no publicar ahí para preparar WalacTV Next. La actividad actual no autoriza cambios de configuración ni borrado. No se ha eliminado ningún elemento.
 
-El proyecto/servicio nuevo propuesto es `WALACTV NEXT` / `WEB NEXT`, separado del `WEB` anterior, con PostgreSQL propia. El dominio final elegido ya está en uso por la web antigua; se mantiene allí durante la instalación. Validar salud de contenedores y conectividad interna antes de retirar la ruta antigua y asignarla a Next. `compose.dokploy.yml` mantiene los servicios en la red de aplicación y los une a la red compartida de Dokploy: `migrate`, `bootstrap-admin` y `api` necesitan acceder al PostgreSQL externo; `web` necesita acceder a `api` y al proxy. Verificar el nombre real de red antes de desplegar. API y base no publican puertos. La instalación local continúa usando `compose.yml` más `compose.local.yml` en una red aislada.
+Estado actual según lectura del panel Dokploy del 2026-11-01: `WALACTV NEXT` / `WEB NEXT` están en producción, `main` y `compose.dokploy.yml`, con Auto Deploy `On Push`; la última revisión exitosa visible era `a83c78d`. `DB NEXT` es PostgreSQL externa a Compose. La configuración y salud del despliegue no autorizan publicar cambios ni modificar servicios. API y base no publican puertos; la instalación local continúa usando `compose.yml` más `compose.local.yml` en red aislada.
 
 El despliegue mantiene `API_REPLICAS=1`; `VOD_TRANSCODING_ENABLED` queda en `false` hasta comprobar capacidad productiva. `DATABASE_URL`, `APP_ORIGIN`, `SESSION_SECRET`, `PROVIDER_IDENTITY_KEY`, `IPTV_ENCRYPTION_KEY`, `BOOTSTRAP_ADMIN_USERNAME`, `BOOTSTRAP_ADMIN_PASSWORD`, `IPTV_ALLOWED_HOSTS`, `TMDB_API_TOKEN` y `DOKPLOY_NETWORK_NAME` se configuran de manera privada en Dokploy. Registrar solo nombres/referencias. El nuevo sistema tiene usuarios y catálogo propios: no migra automáticamente cuentas, sesiones, fuentes, favoritos o progreso legacy.
 
 ## PostgreSQL y migraciones
 
 - Desarrollo usa una base nueva exclusivamente local. No se importa ni modifica información de aplicaciones anteriores.
-- Producción de Next usará el recurso Database → PostgreSQL de Dokploy, separado de Compose y de las bases legacy existentes. El recurso, red, SSL y secretos siguen pendientes; el usuario introducirá la contraseña y los valores de secretos en Dokploy. La preparación de backup/restauración se pospone hasta inmediatamente antes de importar la lista IPTV real, según la decisión del usuario.
+- Producción de Next usa `DB NEXT`, recurso PostgreSQL de Dokploy separado de Compose y de las bases legacy. El puerto TCP externo `5439` está guardado en el panel; publicación efectiva y conectividad desde la aplicación no se han comprobado aquí. El usuario introduce los valores secretos de forma privada. Por decisión del 2026-11-01, no se configurarán copias de seguridad para esta instalación; no hay backup/restauración comprobados.
 - Las bases legacy de producción y desarrollo se observaron en el panel, pero no tenían proveedor de copias configurado. No se inspeccionaron datos ni valores de conexión; su relación con los servicios debe verificarse antes de cualquier retirada.
 - `DATABASE_URL` es el nombre del secreto de conexión. Sus valores nunca se documentan ni imprimen con Compose resuelto.
 - `compose.yml` usa la conexión externa definida por `DATABASE_URL`. En el entorno local, `compose.local.yml` la reemplaza por PostgreSQL 17 aislada, dentro del volumen `walactv-local-postgres-data`, sin publicar el puerto de base de datos al host.
@@ -92,7 +94,7 @@ La web escucha solo en `127.0.0.1:8081`; Nginx entrega `/api/` a Go por la red i
 
 Para parar la aplicación y conservar datos: `docker compose -f compose.yml -f compose.local.yml down`. Para eliminar intencionalmente la base **local** y su volumen: añade `-v`. Esto no modifica ninguna base externa.
 
-El Compose base omite PostgreSQL local y requiere `DATABASE_URL` del recurso PostgreSQL externo. El archivo `compose.dokploy.yml` es el punto de entrada productivo. No usar `compose.local.yml` en Dokploy. El proyecto y `WEB NEXT` ya están vinculados a `main` y `compose.dokploy.yml`, con Auto Deploy apagado; todavía no se ha desplegado Next. PostgreSQL, red, SSL y secretos productivos siguen pendientes. Los backups se prepararán justo antes de importar la lista IPTV real; no se cargarán esos datos antes. El dominio final está elegido y permanece en el servicio anterior hasta el corte.
+El Compose base omite PostgreSQL local y requiere `DATABASE_URL` del recurso PostgreSQL externo. El archivo `compose.dokploy.yml` es el punto de entrada productivo. No usar `compose.local.yml` en Dokploy. Estado de producción, Auto Deploy y última revisión: ver la revalidación del 2026-11-01 al inicio; los párrafos fechados en 2026-10-30 que decían que Auto Deploy estaba apagado y no había despliegue están supersedidos. No se documentan valores de secretos ni se hacen comprobaciones de conectividad a producción desde esta tarea.
 
 ## Comprobaciones
 
@@ -102,7 +104,7 @@ Tras implementar se verificarán los comandos Go, web, validación Compose sin s
 
 `docker compose -f compose.yml -f compose.local.yml up --build -d` crea el PostgreSQL independiente, ejecuta `walactv migrate`, `walactv bootstrap-admin` y después `walactv serve`. Los jobs terminaron con código 0; PostgreSQL/API/web saludables. Migradores concurrentes y bootstrap repetido comprobados. `nginx -t`, Compose `config --quiet` y `/api/v1/health` correctos. Ver `docs/local-verification.md` para evidencia y límites.
 
-El repositorio público y el servicio Dokploy `WEB NEXT` existen; el primer commit se publicó en `main` y la conexión Compose quedó guardada con Auto Deploy apagado. Aún no se ha ejecutado despliegue ni se han creado PostgreSQL/secrets para Next. `IPTV_ALLOWED_HOSTS` puede permanecer vacío para aceptar proveedores con direcciones públicas; si se configura, mantener la lista privada del entorno.
+La información de Dokploy del párrafo histórico original de esta verificación local quedó supersedida por la revalidación del 2026-11-01 al inicio del documento. La comprobación local descrita arriba conserva su alcance y fecha; no representa el estado de despliegue actual.
 
 ## Actualización de persistencia privada · 2026-10-28
 
@@ -147,3 +149,17 @@ Compose limita el servicio API completo a 2 CPU, 1536 MiB y 128 procesos; la sal
 En instalaciones locales, establecer `VOD_TRANSCODING_ENABLED=true` en `.env` y reconstruir Compose para habilitarlo. Producción requeriría evaluar CPU/RAM y habilitar la imagen/variable solo después de medir allí. No requiere migraciones de base de datos ni puertos/servicios/volúmenes persistentes nuevos. Un rollback de imagen cancela y elimina conversiones temporales; PostgreSQL no cambia.
 
 La misma opción habilita `Buscar pistas del archivo`: ffprobe usa el slot VOD y gateway loopback, con límites de 10 s, 16 MiB, 32 solicitudes y 256 KiB de salida JSON; el agotamiento se informa como inventario parcial. El inventario es efímero por playback. La imagen verifica ffprobe, muxer WebVTT y decoders textuales SubRip, ASS y mov_text. Las pistas ASS pierden estilos y PGS/VobSub se muestran como no seleccionables, sin OCR. La salida WebVTT comparte el proceso FFmpeg, su entrada, slot y cancelación, y se limita a 512 cues, 2 MiB totales y 16 KiB por cue. No hay cambios de Compose, variables, PostgreSQL externa de Dokploy ni migraciones. La entrega incremental y sincronía por contenedor aún requieren verificación con fixtures antes de habilitar el uso operativo.
+
+## Descubrimiento Cinemeta · 2026-11-01
+
+`add-cinemeta-iptv-discovery` añade un modo opcional de Películas/Series con cruce privado por IMDb exacto. No añade variables, secretos, servicios/volúmenes Compose ni migraciones; el migrador conserva las versiones actuales y PostgreSQL productiva sigue externa a Compose. La aplicación continúa con `API_REPLICAS=1`, que conserva cursores y caché efímeros en una sola instancia. TMDB `es-ES` continúa bajo demanda en fichas; Cinemeta no proporciona streams ni datos de reproducción.
+
+El backend impone timeout de 5 s, máximo 2 MiB por respuesta, 2 solicitudes externas simultáneas, separación global de 4 solicitudes/s, tres páginas Cinemeta por acción, caché pública en RAM de 15 minutos con máximo 128 lotes/16 MiB y enfriamiento ante límites/fallos. Las solicitudes de descubrimiento se limitan a 10/minuto por usuario. Cursores privados duran 10 minutos, se ligan a usuario/sesión/fuente/generación/filtros y desaparecen al reiniciar la API. Resultados privados usan `Cache-Control: private, no-store`; el contenido IPTV sigue procediendo de la generación activa.
+
+Una reversión de imagen solo descarta caché y cursores efímeros; no cambia ni revierte PostgreSQL. No hace falta ejecutar migraciones ni preparar restauración de base de datos para este cambio. Construcción y comprobaciones locales no publican código ni despliegan. `origin/main` tiene Auto Deploy de producción `On Push` según la revalidación del 2026-11-01; cualquier push requiere autorización y coordinación separada.
+
+La medición de intersección prevista con fixtures locales (210.381 películas / 45.620 series) queda pendiente: en este checkout no hay fixture de ese tamaño ni se consultó una fuente real o PostgreSQL de producción. La consulta implementada es una única búsqueda parametrizada `source_id + active_generation + kind + imdb_id ANY(batch)` con categoría/idioma opcionales; no hace N+1 ni carga todo el catálogo en memoria. Si una medición local aislada supera 2 s, revisar primero el plan de esta consulta y un índice aditivo `(source_id,generation,kind,imdb_id)`; no ampliar el esquema sin evidencia y diseño de migración/rollback revisados.
+
+Los contextos limitan memoria privada a 1 MiB y 2.000 versiones, con hasta ocho por usuario y 128 globales en LRU. Al alcanzar un límite se pide recomenzar; no se presenta como fin del catálogo. Los buffers/caché y enfriamientos son efímeros y no se serializan en PostgreSQL.
+
+Revisión local del cambio · 2026-11-01: `go build ./...` y `npm run build` completaron correctamente; Compose local y productivo pasaron `config --quiet`, y `git diff --check` no informó problemas. No se ejecutaron pruebas automatizadas, fixtures, benchmarks, servicios ni health checks; tampoco se consultó Cinemeta con tráfico real o PostgreSQL de producción. No hay archivos de migración/Compose o nombres de variables cambiados por este cambio. La comprobación funcional y la medición de rendimiento con fixture aislado quedan pendientes de solicitud expresa.

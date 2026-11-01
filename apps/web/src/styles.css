@@ -388,3 +388,89 @@ button{transition:background-color .18s var(--ease-out),border-color .18s var(--
 .tap-to-play svg{width:20px;height:20px}
 .login-submit svg{width:18px;height:18px;display:inline-block;vertical-align:middle}
 .brand>span:last-child span,.mobile-brand>span:last-child,.player-page .brand>span:last-child span,.login-brand>span:last-child{color:var(--color-accent)!important}
+
+/* VOD details: a cinematic, readable layout that gives episode titles room. */
+.detail-backdrop{padding:24px!important}
+.detail-backdrop .detail-dialog{width:min(960px,calc(100vw - 48px))!important;max-height:min(90dvh,900px)!important;padding:28px!important;overflow-y:auto!important;overscroll-behavior:contain}
+.detail-backdrop .detail-close{position:absolute!important;top:14px!important;right:14px!important;z-index:5}
+.detail-hero{position:relative;isolation:isolate;display:grid;grid-template-columns:154px minmax(0,1fr);align-items:center;gap:24px;min-height:228px;margin:-28px -28px 0;padding:28px 78px 24px 28px;overflow:hidden;border-radius:var(--radius-surface) var(--radius-surface) 0 0}
+.detail-hero::after{position:absolute;z-index:-1;inset:0;content:"";background:linear-gradient(90deg,var(--color-surface) 0%,oklch(20% .018 68 / .94) 46%,var(--color-surface) 100%)}
+.detail-backdrop-art{position:absolute;z-index:-2;inset:0;width:100%;height:100%;object-fit:cover;opacity:.2;pointer-events:none}
+.detail-art{width:154px!important;min-height:0!important;max-height:none!important;aspect-ratio:2/3;border:1px solid var(--color-line)!important;border-radius:var(--radius-control)!important;background:var(--color-raised)!important;color:var(--color-accent)!important;box-shadow:0 14px 35px oklch(5% .01 68 / .35)}
+.detail-art img{width:100%!important;height:100%!important;max-height:none!important;object-fit:cover!important}
+.detail-heading{display:flex;min-width:0;flex-direction:column;align-items:flex-start;justify-content:center}
+.detail-kind{margin:0 0 8px;color:var(--color-accent);font-size:.75rem;font-weight:650;letter-spacing:.08em}
+.detail-heading h2{max-width:22ch;margin:0 0 9px!important;padding:0!important;color:var(--color-text)!important;font-size:2rem!important;line-height:1.1!important;letter-spacing:-.04em!important;font-weight:620!important;overflow-wrap:anywhere}
+.detail-source-note{max-width:54ch;margin:0!important;color:var(--color-text-soft)!important;font-size:.875rem!important;line-height:1.5!important}
+.detail-heading .detail-play{margin-top:18px}
+.detail-backdrop .detail-copy{min-width:0!important;padding:8px 0 0!important}
+.detail-backdrop .metadata-overview{max-width:68ch;margin:8px 0 16px!important;color:var(--color-text)!important;font-size:.9375rem!important;line-height:1.65!important}
+.detail-backdrop .metadata-detail-line{display:flex;flex-wrap:wrap;gap:6px 10px;margin:10px 0!important;color:var(--color-text-soft)!important;font-size:.875rem!important;line-height:1.5!important}
+.detail-backdrop .metadata-detail-line b{color:var(--color-text)!important;font-weight:600!important}
+.detail-facts{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:0 18px!important;margin:20px 0 12px!important}
+.detail-facts>span{min-width:0!important;padding:11px 0!important;border:0!important;border-top:1px solid var(--color-line)!important;border-radius:0!important;background:transparent!important}
+.detail-facts small{font-size:.75rem!important;letter-spacing:.02em!important;color:var(--color-text-muted)!important}
+.detail-facts b{margin-top:5px!important;color:var(--color-text)!important;font-size:.875rem!important;font-weight:550!important;overflow-wrap:anywhere}
+.detail-season-section{margin-top:18px;border-top:1px solid var(--color-line);padding-top:18px}
+.detail-season-section .season-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 0 10px;padding:0;border:0}
+.detail-season-section .season-heading h3{margin:0;color:var(--color-text);font-size:1.25rem;font-weight:600;letter-spacing:-.02em}
+.detail-season-section .season-heading label{display:flex;align-items:center;gap:10px;color:var(--color-text-soft);font-size:.875rem}
+.detail-season-section .season-heading select{min-width:190px;min-height:44px;padding:0 36px 0 12px;border:1px solid var(--color-line);border-radius:var(--radius-control);background:var(--color-canvas);color:var(--color-text);font-size:.875rem}
+.detail-season-section .season-overview{margin:12px 0!important}
+.detail-backdrop .episode-list{max-height:none!important;overflow:visible!important;padding:0!important}
+.detail-backdrop .episode-row{display:grid!important;grid-template-columns:minmax(0,1fr) 44px!important;align-items:center;min-width:0;border-bottom:1px solid var(--color-line)!important}
+.detail-backdrop .episode-main{display:grid!important;grid-template-columns:86px minmax(0,1fr) 32px!important;align-items:center;gap:14px;min-width:0;min-height:72px!important;padding:10px 8px!important;border-radius:var(--radius-control)!important;text-align:left}
+.detail-backdrop .episode-number{color:var(--color-text-soft)!important;font-size:.8125rem!important;white-space:nowrap}
+.detail-backdrop .episode-info{display:block;min-width:0}
+.detail-backdrop .episode-info b{display:-webkit-box!important;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-height:1.35;overflow-wrap:anywhere}
+.detail-backdrop .episode-info small{margin-top:4px!important;color:var(--color-text-muted)!important;font-size:.75rem!important}
+.detail-backdrop .episode-main i{display:grid;place-items:center;color:var(--color-accent)!important;font-style:normal}
+.detail-backdrop .episode-main i svg{width:18px;height:18px}
+.detail-backdrop .episode-row .favorite{width:44px!important;height:44px!important;min-width:44px!important}
+.detail-backdrop .metadata-credit{margin-top:24px;padding-top:16px;border-top:1px solid var(--color-line)}
+
+@media(max-width:760px){
+  .detail-backdrop{display:block!important;padding:0!important}
+  .detail-backdrop .detail-dialog{width:100vw!important;height:100dvh!important;min-height:100dvh!important;max-height:100dvh!important;padding:calc(env(safe-area-inset-top,0px) + 68px) 18px calc(env(safe-area-inset-bottom,0px) + 24px)!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+  .detail-backdrop .detail-close{position:fixed!important;top:calc(env(safe-area-inset-top,0px) + 12px)!important;right:16px!important}
+  .detail-hero{grid-template-columns:96px minmax(0,1fr);gap:14px;min-height:0;margin:0;padding:8px 38px 18px 0;border-radius:0}
+  .detail-hero::after{background:linear-gradient(90deg,oklch(20% .018 68 / .82),var(--color-surface) 88%)}
+  .detail-backdrop-art{opacity:.13}
+  .detail-art{width:96px!important;max-height:144px!important;border-radius:8px!important}
+  .detail-heading{padding:0!important}
+  .detail-kind{margin-bottom:6px;font-size:.6875rem}
+  .detail-heading h2{margin:0 0 8px!important;font-size:1.375rem!important;line-height:1.15!important;letter-spacing:-.035em!important}
+  .detail-source-note{font-size:.8125rem!important;line-height:1.45!important}
+  .detail-heading .detail-play{width:100%;min-height:44px!important;margin-top:12px;padding-inline:10px!important;font-size:.8125rem!important}
+  .detail-backdrop .detail-copy{padding-top:4px!important}
+  .detail-backdrop .metadata-overview{font-size:.9375rem!important;line-height:1.6!important}
+  .detail-facts{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:0 16px!important;margin:14px 0 10px!important}
+  .detail-facts>span{padding:10px 0!important}
+  .detail-season-section{margin-top:16px;padding-top:16px}
+  .detail-season-section .season-heading{align-items:center;gap:10px;margin-bottom:8px}
+  .detail-season-section .season-heading h3{font-size:1.125rem}
+  .detail-season-section .season-heading label{align-items:flex-start;flex-direction:column;gap:5px;font-size:.75rem}
+  .detail-season-section .season-heading select{min-width:150px;min-height:44px;font-size:.8125rem}
+  .detail-backdrop .episode-row{grid-template-columns:minmax(0,1fr) 44px!important}
+  .detail-backdrop .episode-main{grid-template-columns:58px minmax(0,1fr) 22px!important;gap:8px;min-height:68px!important;padding:8px 4px!important}
+  .detail-backdrop .episode-number{font-size:.75rem!important}
+  .detail-backdrop .episode-info b{font-size:.875rem!important}
+  .detail-backdrop .episode-info small{font-size:.75rem!important}
+  .detail-backdrop .metadata-credit{margin-top:20px}
+}
+@media(max-width:360px){
+  .detail-backdrop .detail-dialog{padding-inline:14px!important}
+  .detail-hero{grid-template-columns:84px minmax(0,1fr);gap:12px;padding-right:34px}
+  .detail-art{width:84px!important;max-height:126px!important}
+  .detail-heading h2{font-size:1.25rem!important}
+  .detail-backdrop .episode-main{grid-template-columns:52px minmax(0,1fr) 20px!important;gap:6px}
+  .detail-backdrop .episode-row .favorite{width:40px!important;height:40px!important;min-width:40px!important}
+}
+
+/* Cinemeta discovery controls */
+.discovery-mode,.discovery-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:14px 0;color:#9da095;font-size:11px}
+.discovery-controls{padding:12px 14px;border:1px solid #30332a;border-radius:8px;background:#191a15}
+.discovery-controls label{display:flex;align-items:center;gap:9px;color:#c7c9bd}
+.discovery-controls select{min-height:38px;padding:0 30px 0 10px;border:1px solid #383b30;border-radius:5px;background:#20211b;color:#e1e3d8}
+.discovery-controls small{color:#8b8e82}
+@media(max-width:600px){.discovery-controls{align-items:stretch}.discovery-controls label{justify-content:space-between;width:100%}.discovery-controls select{max-width:60%}}
